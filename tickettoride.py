@@ -74,4 +74,7 @@ class Game:
 			for i in range(0, self.number_of_players):
 				if self.players[i].choosing_destination_cards == True:
 					break
-			if i == self.number_of_players:
+			if i == self.number_of_players - 1:
+				self.players_choosing_destination_cards = False
+
+	
