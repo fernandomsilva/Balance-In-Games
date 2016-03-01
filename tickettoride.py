@@ -32,6 +32,13 @@ class CardManager:
 		self.deck = copy.copy(discard_pile)
 		self.discard_pile = []
 
+class Board:
+	def __init__(self, board_graph):
+		self.graph = board_graph
+
+	def get_connection(self, city1, city2):
+		pass
+
 class Game:
 	def __init__(self, board, point_table, destination_deck, train_deck, number_of_players, players, current_player):
 		self.board = board
@@ -77,4 +84,3 @@ class Game:
 			if i == self.number_of_players - 1:
 				self.players_choosing_destination_cards = False
 
-	

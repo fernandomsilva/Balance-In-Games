@@ -24,13 +24,20 @@ def loadgraphfromfile(filename):
 		G.add_edge(node1, node2, weight=int(line[index]), color=color)
 		line = file.readline()
 
-	print G.edges()
+	for e in G.edges():
+		G[e[0]][e[1]]['owner'] = -1
+		#e['owner'] = -1
+
+	#print G.edges()
 
 	nx.draw(G, with_labels=True)
 	plt.show()
+
+	return G
 
 	#for node in G.nodes():
 	#	print node
 
 	#print(G.nodes())
 	#print(G.edges())
+#loadgraphfromfile('usa.txt')
