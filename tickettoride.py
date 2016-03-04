@@ -1,10 +1,12 @@
 import collections
+import random
 
 def make_train_deck(number_of_color_cards, number_of_wildcards):
 	result = []
 	cards = ["red", "orange", "blue", "pink", "white", "yellow", "black", "green"]
 	result = [card for card in cards for x in range(0, number_of_color_cards)]
 	result.extend(["wild" for x in range(0, number_of_wildcards)])
+	return result
 
 def point_table():
 	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
@@ -56,13 +58,13 @@ class Board:
 		return None
 
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, number_of_players, players, current_player):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
 		self.train_deck = CardManager(train_deck)
 		self.train_cards_face_up = []
-		self.number_of_players = number_of_players
+		self.number_of_players = len(players)
 		self.players = players
 		self.current_player = current_player
 		self.players_choosing_destination_cards = False
@@ -71,9 +73,9 @@ class Game:
 	def setup(self):
 		for i in range (0, self.number_of_players):
 			for j in range(0, 4):
-				self.players[i].hand.append(draw_card(self.train_deck))
+				self.players[i].hand.append(self.draw_card(self.train_deck))
 			for j in range(0, 3):
-				self.players[i].hand.append(draw_card(self.destination_deck))
+				self.players[i].hand.append(self.draw_card(self.destination_deck))
 
 			self.players[i].choosing_destination_cards = True
 
@@ -102,14 +104,14 @@ class Game:
 		self.train_cards_face_up.append(card)
 
 		if len(self.train_cards_face_up) == 5:
-			card_count = collections.Count(self.train_deck)
+			card_count = collections.Counter(self.train_deck.deck)
 
 			if 'wild' in card_count:
 				if card_count['wild'] >= 3:
 					self.train_deck.discard(self.train_cards_face_up)
 					self.train_cards_face_up = []
 
-					x = 5 if len(self.train_deck.deck) + len(self.train_deck.discard) >= 5 else len(self.train_deck.deck) + len(self.train_deck.discard)
+					x = 5 if len(self.train_deck.deck) + len(self.train_deck.discard_pile) >= 5 else len(self.train_deck.deck) + len(self.train_deck.discard_pile)
 					for i in range(0, x):
 						self.addFaceUpTrainCard()
 
@@ -135,6 +137,10 @@ class Game:
 						break
 				if i == self.number_of_players - 1:
 					self.players_choosing_destination_cards = False
+
+			for card in self.players[player].hand:
+				if type(card) != str:
+					self.players[player].hand.remove(card)
 
 		if min_num_cards == 1:
 			self.next_players_turn()

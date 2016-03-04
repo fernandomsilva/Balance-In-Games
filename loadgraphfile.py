@@ -7,7 +7,7 @@ def loadgraphfromfile(filename):
 	file = open(filename, 'r')
 	line = file.readline()
 
-	G = nx.Graph()
+	G = nx.MultiGraph()
 
 	while len(line.strip()) > 0:
 		G.add_node(line.strip())
@@ -25,13 +25,14 @@ def loadgraphfromfile(filename):
 		line = file.readline()
 
 	for e in G.edges():
-		G[e[0]][e[1]]['owner'] = -1
+		for me in G[e[0]][e[1]]:
+			G[e[0]][e[1]][me]['owner'] = -1
 		#e['owner'] = -1
 
 	#print G.edges()
 
-	nx.draw(G, with_labels=True)
-	plt.show()
+	#nx.draw(G, with_labels=True)
+	#plt.show()
 
 	return G
 
