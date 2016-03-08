@@ -46,14 +46,40 @@ class Board:
 	def __init__(self, board_graph):
 		self.graph = board_graph
 
-	def get_connection(self, city1, city2):
+	def get_connection(self, city1, city2, color=None):
+		edge = None
+
 		if city1 in self.graph:
 			if city2 in self.graph[city1]:
-				return self.graph[city1][city2]
+				edge = self.graph[city1][city2]
 
 		if city2 in self.graph:
 			if city1 in self.graph[city2]:
-				return self.graph[city2][city1]
+				edge = self.graph[city2][city1]
+
+		if edge != None:
+			if color == None:
+				return edge
+			else:
+				for opt in edge:
+					if edge[opt]['color'] == color:
+						return edge[opt]
+
+		return None
+
+	def get_free_connection(self, city1, city2, color, number_of_players=2):
+		connections = self.get_connection(city1, city2)
+
+		if number_of_players < 4:
+			locked = False
+			for c in connections:
+				if connections[c]['owner'] != -1:
+					locked = True
+
+		if not locked:
+			for c in connections:
+				if (connections[c]['color'] == color or connections[c]['color'] == "GRAY") and connections[c]['owner'] == -1:
+					return connections[c]
 
 		return None
 
@@ -116,7 +142,7 @@ class Game:
 						self.addFaceUpTrainCard()
 
 	def next_players_turn(self):
-		self.current_player = self.current_player + 1
+		self.current_player = (self.current_player + 1) % self.number_of_players
 
 	def choose_destination_cards(self, args):
 		return choosing_destination_cards(args[0], args[1])
@@ -134,6 +160,7 @@ class Game:
 			if self.players_choosing_destination_cards:
 				for i in range(0, self.number_of_players):
 					if self.players[i].choosing_destination_cards == True:
+						i = i - 1
 						break
 				if i == self.number_of_players - 1:
 					self.players_choosing_destination_cards = False
@@ -142,12 +169,14 @@ class Game:
 				if type(card) != str:
 					self.players[player].hand.remove(card)
 
-		if min_num_cards == 1:
+		if min_num_cards == 1 and len(cards) >= min_num_cards:
 			self.next_players_turn()
 
 	def checkPlayerHandRequirements(self, player_index, number_of_cards, color):
 		if len(self.players[player_index].hand) < number_of_cards:
 			return False
+
+		color = color.lower()
 
 		card_count = collections.Counter(self.players[player_index].hand)
 		total = 0
@@ -180,23 +209,23 @@ class Game:
 			return claimRoute(args[0], args[1])
 		return claimRoute(args[0], args[1], args[2])		
 
-	def claimRoute(self, city1, city2, color=None):
-		edge = self.board.get_connection(city1, city2)
+	def claimRoute(self, city1, city2, color):
+		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
 
-		if edge['owner'] == -1:
+		if edge != None and edge['owner'] == -1:
 			route_color = edge['color'] if edge['color'] != 'GRAY' else color
-			cards_needed = checkPlayerHandRequirements(self.current_player, edge['weight'], route_color)
+			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color)
 
-			if cards_needed and self.players[current_player].trains >= edge['weight']:
-				self.discard_cards(current_player, cards_needed)
-				self.players[current_player].trains = self.players[current_player].trains - edge['weight']
-				edge['owner'] = current_player
-				self.players[current_player].points = self.players[current_player].points + self.point_table[edge['weight']]
+			if cards_needed and self.players[self.current_player].number_of_trains >= edge['weight']:
+				self.discard_cards(self.current_player, cards_needed)
+				self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['weight']
+				edge['owner'] = self.current_player
+				self.players[self.current_player].points = self.players[self.current_player].points + self.point_table[edge['weight']]
 			else:
 				return False
 
-			if self.players[current_player].trains <= 2:
-				self.last_turn_player = current_player
+			if self.players[self.current_player].number_of_trains <= 2:
+				self.last_turn_player = self.current_player
 
 			self.next_players_turn()
 
