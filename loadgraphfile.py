@@ -1,7 +1,7 @@
 import networkx as nx
 import re
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 def loadgraphfromfile(filename):
 	file = open(filename, 'r')

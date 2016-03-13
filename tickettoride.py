@@ -1,5 +1,6 @@
 import collections
 import random
+import networkx as nx
 
 def make_train_deck(number_of_color_cards, number_of_wildcards):
 	result = []
@@ -11,10 +12,16 @@ def make_train_deck(number_of_color_cards, number_of_wildcards):
 def point_table():
 	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
 
+def comparePlayerKey(p1):
+	return p1.points
+
 class DestinationCard:
 	def __init__(self, dest1, dest2, points):
 		self.destinations = [dest1, dest2]
 		self.points = points
+	
+	def __str__(self):
+		return str(self.destinations) + " " + str(self.points)
 
 class Player:
 	def __init__(self, hand, number_of_trains, points):
@@ -23,6 +30,7 @@ class Player:
 		self.number_of_trains = number_of_trains
 		self.points = points
 		self.choosing_destination_cards = False
+		self.drawing_train_cards = False
 
 class CardManager:
 	def __init__(self, deck):
@@ -36,7 +44,11 @@ class CardManager:
 		return card
 
 	def discard(self, card):
-		self.discard_pile.append(card)
+		if type(card) == type([]):
+			for c in card:
+				self.discard_pile.append(c)
+		else:
+			self.discard_pile.append(card)
 
 	def reshuffle(self):
 		self.deck = copy.copy(discard_pile)
@@ -130,7 +142,7 @@ class Game:
 		self.train_cards_face_up.append(card)
 
 		if len(self.train_cards_face_up) == 5:
-			card_count = collections.Counter(self.train_deck.deck)
+			card_count = collections.Counter(self.train_cards_face_up)
 
 			if 'wild' in card_count:
 				if card_count['wild'] >= 3:
@@ -144,8 +156,8 @@ class Game:
 	def next_players_turn(self):
 		self.current_player = (self.current_player + 1) % self.number_of_players
 
-	def choose_destination_cards(self, args):
-		return choosing_destination_cards(args[0], args[1])
+	def move_choose_destination_cards(self, args):
+		return self.choosing_destination_cards(args[0], args[1])
 
 	def choose_destination_cards(self, player, cards):
 		min_num_cards = 2 if self.players_choosing_destination_cards else 1
@@ -204,10 +216,10 @@ class Game:
 
 		return cards_to_use
 
-	def claimRoute(self, args):
-		if len(args) == 2:
-			return claimRoute(args[0], args[1])
-		return claimRoute(args[0], args[1], args[2])		
+	def move_claimRoute(self, args):
+		#if len(args) == 2:
+		#	return self.claimRoute(args[0], args[1])
+		return self.claimRoute(args[0], args[1], args[2])		
 
 	def claimRoute(self, city1, city2, color):
 		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
@@ -233,7 +245,7 @@ class Game:
 
 		return False
 
-	def drawDestinationCards(self, args):
+	def move_drawDestinationCards(self, args):
 		return drawDestinationCards()
 
 	def drawDestinationCards(self):
@@ -248,9 +260,99 @@ class Game:
 
 		return True
 
-	#def make_move(self, move, args):
-	#	last_turn = False
-	#	if self.current_player == self.last_turn_player:
-	#		last_turn = True
-	#	if not self.players[current_player].choosing_destination_cards or (self.players[current_player].choosing_destination_cards and move == choose_destination_cards):
-	#		move(args)
+	def move_drawTrainCard(self, card):
+		return self.drawTrainCard(card)
+
+	def drawTrainCard(self, card):
+		if card == 'wild' and card in self.train_cards_face_up and self.players[self.current_player].drawing_train_cards == False:
+			self.players[self.current_player].hand.append('wild')
+			self.train_cards_face_up.remove('wild')
+			self.addFaceUpTrainCard()
+			self.next_players_turn()
+			
+			return True
+		
+		drawn = False
+		
+		if card == 'top':
+			self.players[self.current_player].hand.append(self.draw_card(self.train_deck))
+			drawn = True
+			
+		elif card in self.train_cards_face_up:
+			self.players[self.current_player].hand.append(card)
+			self.train_cards_face_up.remove(card)
+			self.addFaceUpTrainCard()
+			
+			drawn = True
+		
+		if drawn:
+			if self.players[self.current_player].drawing_train_cards:
+				self.players[self.current_player].drawing_train_cards = False
+				self.next_players_turn()
+			
+			else:
+				self.players[self.current_player].drawing_train_cards = True
+			
+			return True
+		
+		return False
+		
+	def make_move(self, move, args):
+		last_turn = False
+		if self.current_player == self.last_turn_player:
+			last_turn = True
+		if not self.players[self.current_player].choosing_destination_cards or (self.players[self.current_player].choosing_destination_cards and move == self.choose_destination_cards):
+			move(args)
+		if last_turn:
+			self.calculatePoints()
+			return sorted([x for x in self.players], key=comparePlayerKey)
+
+	def player_graph(self, player):
+		G = nx.Graph()
+		
+		for node1 in self.board.graph:
+			for node2 in self.board.graph[node1]:
+				for edge in self.board.graph[node1][node2]:
+					if self.board.graph[node1][node2][edge]['owner'] == player:
+						G.add_edge(node1, node2, weight=self.board.graph[node1][node2][edge]['weight'])
+		
+		return G
+
+	def calculatePoints(self):
+		longest_route_value = None
+		longest_route_player = []
+	
+		for player in self.players:
+			player_graph = self.player_graph(self.players.index(player))
+		
+			for destination in player.hand_destination_cards:
+				try:
+					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+						player.points = player.points + destination.points
+					else:
+						player.points = player.points - destination.points
+				except:
+					player.points = player.points - destination.points
+
+			temp = max([self.findMaxWeightSumForNode(player_graph, v, []) for v in player_graph.nodes()])
+			
+			if longest_route_value == None or temp >= longest_route_value:
+				if temp > longest_route_value:
+					longest_route_player = [self.players.index(player)]
+				else:
+					longest_route_player.append(self.players.index(player))
+
+				longest_route_value = temp
+		
+		for player in longest_route_player:
+			self.players[player].points = self.players[player].points + 10
+			
+	def findMaxWeightSumForNode(self, G, source, list_of_visited_edges):
+		temp_edges = [e for e in G.edges() if e not in list_of_visited_edges and source in e]
+		if len(temp_edges) == 0:
+			return 0
+		else:
+			result = []
+			result.extend([(func(G, x, list_of_visited_edges+[(x,y)]) + G[x][y]['weight']) for (x,y) in temp_edges if source == y])
+			result.extend([(func(G, y, list_of_visited_edges+[(x,y)]) + G[y][x]['weight']) for (x,y) in temp_edges if source == x])
+			return max(result)
