@@ -1,7 +1,40 @@
 import collections
 import random
 import networkx as nx
+import itertools
+import random
+import copy
 
+
+class Agent:
+	def __init__(self):
+		pass
+
+	def decide(self, game, pnum):
+		pmoves = game.get_possible_moves(pnum)
+		return random.choice(pmoves)
+
+
+class GameHandler:
+	def __init__(self, game, agents):
+		self.game = game
+		self.agents = agents
+
+	def play(self):
+		for i in range(0, self.game.number_of_players):
+			move = self.agents[i].decide(self.game, i)
+			self.game.make_move(move.function, move.args)
+		
+		while self.game.current_player != self.game.last_turn_player:
+			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
+			#print self.game.players[self.game.current_player].hand
+			self.game.make_move(move.function, move.args)
+
+		move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
+		self.game.make_move(move.function, move.args)
+
+		print("Player 1: " + str(self.game.players[0].points))
+		print("Player 2: "+ str(self.game.players[1].points))
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
 #number_of_wildcards => an integer that defines the number of wild cards in the deck
@@ -49,6 +82,17 @@ class Player:
 		self.choosing_destination_cards = False
 		self.drawing_train_cards = False
 
+	def print_destination_cards(self):
+		for card in self.hand_destination_cards:
+			print(card)
+
+#Data structure to store move data
+class Move:
+	def __init__(self, fref, args):
+		self.function = fref
+		self.args = args
+
+
 #class to encapsulate decks (train card deck and destination deck)
 #deck => list of cards (strings for train deck, DestinationCard class for destination deck) of the deck 
 class CardManager:
@@ -73,7 +117,7 @@ class CardManager:
 
 	#assumes an empty deck. Puts all cards from the discard pile back in the deck. Empties the discard_pile
 	def reshuffle(self):
-		self.deck = copy.copy(discard_pile)
+		self.deck = copy.copy(self.discard_pile)
 		self.discard_pile = []
 
 #class to encapsulate the Board (represented by a graph from the library networkx)
@@ -81,6 +125,7 @@ class CardManager:
 class Board:
 	def __init__(self, board_graph):
 		self.graph = board_graph
+
 
 	#returns a route (edge) of a specific color that connect two cities
 	#if color is None, return a list of all routes between the two cities
@@ -210,21 +255,22 @@ class Game:
 	#adds a new face up train cards
 	#makes sure to never have 3 wild cards face up at the same time (rulebook)
 	def addFaceUpTrainCard(self):
-		card = self.draw_card(self.train_deck)
+		if len(self.train_deck.deck) > 0:
+			card = self.draw_card(self.train_deck)
 
-		self.train_cards_face_up.append(card)
+			self.train_cards_face_up.append(card)
 
-		if len(self.train_cards_face_up) == 5:
-			card_count = collections.Counter(self.train_cards_face_up)
+			if len(self.train_cards_face_up) == 5:
+				card_count = collections.Counter(self.train_cards_face_up)
 
-			if 'wild' in card_count:
-				if card_count['wild'] >= 3:
-					self.train_deck.discard(self.train_cards_face_up)
-					self.train_cards_face_up = []
+				if 'wild' in card_count:
+					if card_count['wild'] >= 3:
+						self.train_deck.discard(self.train_cards_face_up)
+						self.train_cards_face_up = []
 
-					x = 5 if len(self.train_deck.deck) + len(self.train_deck.discard_pile) >= 5 else len(self.train_deck.deck) + len(self.train_deck.discard_pile)
-					for i in range(0, x):
-						self.addFaceUpTrainCard()
+						x = 5 if len(self.train_deck.deck) + len(self.train_deck.discard_pile) >= 5 else len(self.train_deck.deck) + len(self.train_deck.discard_pile)
+						for i in range(0, x):
+							self.addFaceUpTrainCard()
 
 	#passes the turn to the next player
 	def next_players_turn(self):
@@ -242,7 +288,7 @@ class Game:
 
 	#makes the move of choosing the destination cards to keep
 	def move_choose_destination_cards(self, args):
-		return self.choosing_destination_cards(args[0], args[1])
+		return self.choose_destination_cards(args[0], args[1])
 
 	#chooses which destination cards to keep
 	#player => index of the player choosing the cards
@@ -266,9 +312,16 @@ class Game:
 				if i == self.number_of_players - 1:
 					self.players_choosing_destination_cards = False
 
+			cards_to_remove = []
 			for card in self.players[player].hand:
 				if type(card) != str:
-					self.players[player].hand.remove(card)
+					cards_to_remove.append(card)
+
+			for card in cards_to_remove:
+				self.players[player].hand.remove(card)
+
+			#print (self.players[player].hand)
+			#raw_input('wait')
 
 		if min_num_cards == 1 and len(cards) >= min_num_cards:
 			self.next_players_turn()
@@ -349,24 +402,25 @@ class Game:
 
 	#makes the move of drawing new destination cards
 	def move_drawDestinationCards(self, args):
-		return drawDestinationCards()
+		return self.drawDestinationCards()
 
 	#draws 3 new destination cards of which the player is required to keep at least 1 (rulebook)
 	#the player that does this move needs to call the choose destination cards moves right after.
 	def drawDestinationCards(self):
-		if len(self.destination_deck) == 0:
+		if len(self.destination_deck.deck) == 0:
 			return False
 
-		x = 3 if len(self.destination_deck) >= 3 else len(self.destination_deck)
+		x = 3 if len(self.destination_deck.deck) >= 3 else len(self.destination_deck.deck)
 		for i in range(0, x):
-			self.players[current_player].hand.append(self.draw_card(self.destination_deck))
+			self.players[self.current_player].hand.append(self.draw_card(self.destination_deck))
 
-		self.players[current_player].choosing_destination_cards = True
+		self.players[self.current_player].choosing_destination_cards = True
 
 		return True
 
 	#makes the move of drawing new train cards
 	def move_drawTrainCard(self, card):
+
 		return self.drawTrainCard(card)
 
 	#draws a new train card either from the ones face up on the table or from the top of the deck
@@ -395,6 +449,14 @@ class Game:
 			drawn = True
 		
 		if drawn:
+			if card == 'top' and len(self.train_deck.deck) == 0:
+				self.next_players_turn()
+				return True
+
+			elif len(self.train_deck.deck) == 0 and len(self.train_cards_face_up) == 0:
+				self.next_players_turn()
+				return True
+
 			if self.players[self.current_player].drawing_train_cards:
 				self.players[self.current_player].drawing_train_cards = False
 				self.next_players_turn()
@@ -409,10 +471,12 @@ class Game:
 	#makes a move as the current player
 	#read the description of how to use on the Game Class description
 	def make_move(self, move, args):
+		print("args: " + str(args))
+		#print(len(self.train_deck.deck))
 		last_turn = False
 		if self.current_player == self.last_turn_player:
 			last_turn = True
-		if not self.players[self.current_player].choosing_destination_cards or (self.players[self.current_player].choosing_destination_cards and move == self.choose_destination_cards):
+		if not self.players[self.current_player].choosing_destination_cards or (self.players[self.current_player].choosing_destination_cards and move == self.move_choose_destination_cards):
 			move(args)
 		if last_turn:
 			self.calculatePoints()
@@ -472,6 +536,52 @@ class Game:
 			return 0
 		else:
 			result = []
-			result.extend([(findMaxWeightSumForNode(G, x, list_of_visited_edges+[(x,y)]) + G[x][y]['weight']) for (x,y) in temp_edges if source == y])
-			result.extend([(findMaxWeightSumForNode(G, y, list_of_visited_edges+[(x,y)]) + G[y][x]['weight']) for (x,y) in temp_edges if source == x])
+			result.extend([(self.findMaxWeightSumForNode(G, x, list_of_visited_edges+[(x,y)]) + G[x][y]['weight']) for (x,y) in temp_edges if source == y])
+			result.extend([(self.findMaxWeightSumForNode(G, y, list_of_visited_edges+[(x,y)]) + G[y][x]['weight']) for (x,y) in temp_edges if source == x])
 			return max(result)
+
+	def get_possible_moves(self, player_index):
+		pmoves = []
+		if self.players_choosing_destination_cards == True:
+			dest_card_set = self.list_pending_destination_cards(player_index)
+			for x in range(2, len(dest_card_set) + 1):
+				comb = itertools.combinations(dest_card_set, x)
+				for cardset in comb:
+					pmoves.append(Move(self.move_choose_destination_cards, [player_index, cardset]))
+		elif self.players[player_index].choosing_destination_cards == True:
+			dest_card_set = self.list_pending_destination_cards(player_index)
+			for x in range(1, len(dest_card_set) + 1):
+				comb = itertools.combinations(dest_card_set, x)
+				for cardset in comb:
+					pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
+		elif self.players[player_index].drawing_train_cards == True:
+			pmoves.append(Move(self.move_drawTrainCard, 'top'))
+			for card in self.train_cards_face_up:
+				pmoves.append(Move(self.move_drawTrainCard, card))
+		else:
+			colors = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
+			edges = self.board.graph.edges()
+			#for city1 in self.board.graph:
+			#	for city2 in self.board.graph:
+			visited = []
+			for (city1, city2) in edges:
+				if (city1, city2) not in visited:
+					visited.append((city1, city2))
+
+					for color in colors:
+						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
+
+						if edge != None:
+							if self.checkPlayerHandRequirements(player_index, edge['weight'], color) != False:
+								pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
+			if len(self.destination_deck.deck) > 0:
+				pmoves.append(Move(self.move_drawDestinationCards,[]))
+			if len(self.train_deck.deck) > 0:
+				pmoves.append(Move(self.move_drawTrainCard, 'top'))
+			if len(self.train_cards_face_up) > 0:
+				for card in self.train_cards_face_up:
+					pmoves.append(Move(self.move_drawTrainCard, card))
+		return pmoves
+
+
+
