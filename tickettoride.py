@@ -4,6 +4,22 @@ import networkx as nx
 import itertools
 import random
 import copy
+import Queue
+
+
+
+class CopyAgent:
+	def __init__(self):
+		pass
+
+	def decide(self, game, pnum):
+		pmoves = game.get_possible_moves(pnum)
+		for move in pmoves:
+			g = game.copy()
+			g.players_choosing_destination_cards = False
+			g.make_move(move.function, move.args)
+			g.current_player = pnum
+		return random.choice(pmoves)
 
 
 class Agent:
@@ -14,6 +30,66 @@ class Agent:
 		pmoves = game.get_possible_moves(pnum)
 		return random.choice(pmoves)
 
+class AStarMove:
+	def __init__(self, game, move, pnum, lnum):
+		self.state = game
+		self.basemove = move
+		self.pnum = pnum
+		self.lnum = lnum
+
+	def __int__(self):
+		return self.state.players[pnum].points * -1 - self.lnum + self.state.players[pnum].number_of_trains + len(self.state.players[pnum].hand)
+
+class AStarAgent:
+	def __init__(self):
+		pass
+
+	def decide(self,game,pnum):
+		count = 0
+		prioq = Queue.PriorityQueue(0)
+		pmoves = game.get_possible_moves(pnum)
+		if game.players_choosing_destination_cards == True:
+			game.players_choosing_destination_cards = False
+		for move in pmoves:
+			print "move considered: " + str(count)
+			count = count + 1
+			g = game.copy()
+			print "Before: "
+			g.players[pnum].print_destination_cards()
+			print "Root world state: "
+			game.players[pnum].print_destination_cards()
+			g.make_move(move.function, move.args)
+			g.current_player = pnum
+			prioq.put(AStarMove(g, move, pnum, 0))
+			print "After: "
+			g.players[pnum].print_destination_cards()
+			print "Root world state: "
+			game.players[pnum].print_destination_cards()
+
+		while True:
+			miniprioq = Queue.PriorityQueue()
+			ATuple = prioq.get()
+			#print (str(ATuple.lnum) + ", " + str(ATuple.state.players[pnum].points) + ", " + str(ATuple.state.players[pnum].number_of_trains) + ", " + str(len(ATuple.state.players[pnum].hand)))
+			nstat = ATuple.state
+			if nstat.last_turn_player != -1:
+				return ATuple.basemove
+			pmoves = nstat.get_possible_moves(pnum)
+			for move in pmoves:
+				g = nstat.copy()
+				g.make_move(move.function, move.args)
+				g.current_player = pnum
+				miniprioq.put(AStarMove(g, ATuple.basemove, pnum, ATuple.lnum + 1))
+			for x in range(0, 5):
+				prioq.put(miniprioq.get())
+				count = count + 1
+			if count >= 500:
+				nq = Queue.PriorityQueue()
+				for x in range(0, 25):
+					nq.put(prioq.get())
+				prioq = nq
+				count = 0
+
+
 
 class GameHandler:
 	def __init__(self, game, agents):
@@ -22,10 +98,14 @@ class GameHandler:
 
 	def play(self):
 		for i in range(0, self.game.number_of_players):
+			print(i)
 			move = self.agents[i].decide(self.game, i)
 			self.game.make_move(move.function, move.args)
 		
+		print (self.game.players_choosing_destination_cards)
+
 		while self.game.current_player != self.game.last_turn_player:
+			print("Current Player: " + str(self.game.current_player))
 			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 			#print self.game.players[self.game.current_player].hand
 			self.game.make_move(move.function, move.args)
@@ -82,9 +162,16 @@ class Player:
 		self.choosing_destination_cards = False
 		self.drawing_train_cards = False
 
+	def copy(self):
+		p = Player(copy.copy(self.hand), self.number_of_trains, self.points)
+		p.choosing_destination_cards = self.choosing_destination_cards
+		p.drawing_train_cards = self.drawing_train_cards
+		return p
+
 	def print_destination_cards(self):
 		for card in self.hand_destination_cards:
 			print(card)
+
 
 #Data structure to store move data
 class Move:
@@ -99,6 +186,11 @@ class CardManager:
 	def __init__(self, deck):
 		self.deck = deck
 		self.discard_pile = []
+
+	def copy(self):
+		c = CardManager(copy.deepcopy(self.deck))
+		c.discard_pile = copy.deepcopy(self.discard_pile)
+		return c
 
 	#returns a randomly picked card from the list (deck)
 	def draw_card(self):
@@ -126,6 +218,9 @@ class Board:
 	def __init__(self, board_graph):
 		self.graph = board_graph
 
+	def copy(self):
+		b = Board(copy.deepcopy(self.graph))
+		return b
 
 	#returns a route (edge) of a specific color that connect two cities
 	#if color is None, return a list of all routes between the two cities
@@ -218,6 +313,11 @@ class Game:
 		self.players_choosing_destination_cards = False
 		self.last_turn_player = -1
 
+	def copy(self):
+		g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy.deepcopy(self.players), self.current_player)
+		
+		return g
+
 	#sets up the initial state of the players hands, face up cards and etc
 	#remember, the first move of every player should be to choose the destination cards they want to keep
 	def setup(self):
@@ -288,7 +388,10 @@ class Game:
 
 	#makes the move of choosing the destination cards to keep
 	def move_choose_destination_cards(self, args):
-		return self.choose_destination_cards(args[0], args[1])
+		print "Destination cards chosen!"
+		for card in args[1]:
+			print card
+		self.choose_destination_cards(args[0], args[1])
 
 	#chooses which destination cards to keep
 	#player => index of the player choosing the cards
@@ -402,6 +505,7 @@ class Game:
 
 	#makes the move of drawing new destination cards
 	def move_drawDestinationCards(self, args):
+		print("Draw destination cards selected!")
 		return self.drawDestinationCards()
 
 	#draws 3 new destination cards of which the player is required to keep at least 1 (rulebook)
@@ -471,7 +575,7 @@ class Game:
 	#makes a move as the current player
 	#read the description of how to use on the Game Class description
 	def make_move(self, move, args):
-		print("args: " + str(args))
+		#print("args: " + str(args))
 		#print(len(self.train_deck.deck))
 		last_turn = False
 		if self.current_player == self.last_turn_player:
@@ -547,7 +651,7 @@ class Game:
 			for x in range(2, len(dest_card_set) + 1):
 				comb = itertools.combinations(dest_card_set, x)
 				for cardset in comb:
-					pmoves.append(Move(self.move_choose_destination_cards, [player_index, cardset]))
+					pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].choosing_destination_cards == True:
 			dest_card_set = self.list_pending_destination_cards(player_index)
 			for x in range(1, len(dest_card_set) + 1):
