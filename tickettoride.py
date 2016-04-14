@@ -7,7 +7,6 @@ import copy
 import Queue
 
 
-
 class CopyAgent:
 	def __init__(self):
 		pass
@@ -48,8 +47,8 @@ class AStarAgent:
 		count = 0
 		prioq = Queue.PriorityQueue(0)
 		pmoves = game.get_possible_moves(pnum)
-		if game.players_choosing_destination_cards == True:
-			game.players_choosing_destination_cards = False
+		#if game.players_choosing_destination_cards == True:
+		#	game.players_choosing_destination_cards = False
 		for move in pmoves:
 			print "move considered: " + str(count)
 			count = count + 1
@@ -58,6 +57,8 @@ class AStarAgent:
 			g.players[pnum].print_destination_cards()
 			print "Root world state: "
 			game.players[pnum].print_destination_cards()
+			print game.players[pnum]
+			print g.players[pnum]
 			g.make_move(move.function, move.args)
 			g.current_player = pnum
 			prioq.put(AStarMove(g, move, pnum, 0))
@@ -66,6 +67,7 @@ class AStarAgent:
 			print "Root world state: "
 			game.players[pnum].print_destination_cards()
 
+		i = 0
 		while True:
 			miniprioq = Queue.PriorityQueue()
 			ATuple = prioq.get()
@@ -75,6 +77,7 @@ class AStarAgent:
 				return ATuple.basemove
 			pmoves = nstat.get_possible_moves(pnum)
 			for move in pmoves:
+				i = i + 1
 				g = nstat.copy()
 				g.make_move(move.function, move.args)
 				g.current_player = pnum
@@ -88,8 +91,11 @@ class AStarAgent:
 					nq.put(prioq.get())
 				prioq = nq
 				count = 0
+			if i > 2000:
+				break
+			print i
 
-
+		return miniprioq.get().basemove
 
 class GameHandler:
 	def __init__(self, game, agents):
@@ -99,7 +105,7 @@ class GameHandler:
 	def play(self):
 		for i in range(0, self.game.number_of_players):
 			print(i)
-			move = self.agents[i].decide(self.game, i)
+			move = self.agents[i].decide(self.game.copy(), i)
 			self.game.make_move(move.function, move.args)
 		
 		print (self.game.players_choosing_destination_cards)
@@ -115,6 +121,7 @@ class GameHandler:
 
 		print("Player 1: " + str(self.game.players[0].points))
 		print("Player 2: "+ str(self.game.players[1].points))
+
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
 #number_of_wildcards => an integer that defines the number of wild cards in the deck
@@ -163,7 +170,8 @@ class Player:
 		self.drawing_train_cards = False
 
 	def copy(self):
-		p = Player(copy.copy(self.hand), self.number_of_trains, self.points)
+		p = Player(list(self.hand), self.number_of_trains, self.points)
+		p.hand_destination_cards = copy.copy(self.hand_destination_cards)
 		p.choosing_destination_cards = self.choosing_destination_cards
 		p.drawing_train_cards = self.drawing_train_cards
 		return p
@@ -312,15 +320,28 @@ class Game:
 		self.current_player = current_player
 		self.players_choosing_destination_cards = False
 		self.last_turn_player = -1
+		self.moves_reference = {}
 
+	def set_moves_reference(self):
+		self.moves_reference['chooseDestinationCards'] = self.move_choose_destination_cards
+		self.moves_reference['claimRoute'] = self.move_claimRoute
+		self.moves_reference['drawDestinationCards'] = self.move_drawDestinationCards
+		self.moves_reference['drawTrainCard'] = self.move_drawTrainCard
+		
 	def copy(self):
-		g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy.deepcopy(self.players), self.current_player)
+		copy_players = []
+		for p in self.players:
+			copy_players.append(p.copy())
+		g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
+		g.set_moves_reference()
 		
 		return g
 
 	#sets up the initial state of the players hands, face up cards and etc
 	#remember, the first move of every player should be to choose the destination cards they want to keep
 	def setup(self):
+		self.set_moves_reference()
+	
 		for i in range (0, self.number_of_players):
 			for j in range(0, 4):
 				self.players[i].hand.append(self.draw_card(self.train_deck))
@@ -400,7 +421,10 @@ class Game:
 	def choose_destination_cards(self, player, cards):
 		min_num_cards = 2 if self.players_choosing_destination_cards else 1
 
+		#print "cards:" + str(cards)
+		
 		if len(cards) >= min_num_cards:
+			#print self.players[player].hand
 			for card in cards:
 				self.players[player].hand.remove(card)
 				self.players[player].hand_destination_cards.append(card)
@@ -651,17 +675,20 @@ class Game:
 			for x in range(2, len(dest_card_set) + 1):
 				comb = itertools.combinations(dest_card_set, x)
 				for cardset in comb:
-					pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
+					pmoves.append(Move(self.moves_reference['chooseDestinationCards'], [player_index, list(cardset)]))
+					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].choosing_destination_cards == True:
 			dest_card_set = self.list_pending_destination_cards(player_index)
 			for x in range(1, len(dest_card_set) + 1):
 				comb = itertools.combinations(dest_card_set, x)
 				for cardset in comb:
-					pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
+					pmoves.append(Move(self.moves_reference['chooseDestinationCards'], [player_index, list(cardset)]))
+					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].drawing_train_cards == True:
 			pmoves.append(Move(self.move_drawTrainCard, 'top'))
 			for card in self.train_cards_face_up:
-				pmoves.append(Move(self.move_drawTrainCard, card))
+				pmoves.append(Move(self.moves_reference['drawTrainCard'], card))
+				#pmoves.append(Move(self.move_drawTrainCard, card))				
 		else:
 			colors = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
 			edges = self.board.graph.edges()
@@ -677,14 +704,18 @@ class Game:
 
 						if edge != None:
 							if self.checkPlayerHandRequirements(player_index, edge['weight'], color) != False:
-								pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
+								pmoves.append(Move(self.moves_reference['claimRoute'], [city1, city2, color]))
+								#pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
 			if len(self.destination_deck.deck) > 0:
-				pmoves.append(Move(self.move_drawDestinationCards,[]))
+				pmoves.append(Move(self.moves_reference['drawDestinationCards'],[]))
+				#pmoves.append(Move(self.move_drawDestinationCards,[]))
 			if len(self.train_deck.deck) > 0:
-				pmoves.append(Move(self.move_drawTrainCard, 'top'))
+				pmoves.append(Move(self.moves_reference['drawTrainCard'], 'top'))
+				#pmoves.append(Move(self.move_drawTrainCard, 'top'))
 			if len(self.train_cards_face_up) > 0:
 				for card in self.train_cards_face_up:
-					pmoves.append(Move(self.move_drawTrainCard, card))
+					pmoves.append(Move(self.moves_reference['drawTrainCard'], card))
+					#pmoves.append(Move(self.move_drawTrainCard, card))
 		return pmoves
 
 
