@@ -39,7 +39,7 @@ class AStarMove:
 		self.lnum = lnum
 
 	def __int__(self):
-		return self.state.players[self.pnum].points * -1 
+		return self.state.players[self.pnum].points * -1 - self.state.getDCardScore(self.pnum)
 
 	def __cmp__(self, other):
 		return cmp(int(self), int(other))
@@ -50,13 +50,10 @@ class RAStarAgent:
 
 	def decide(self,game,pnum):
 		adversary = Agent()
-		adnum = 0
-		if pnum == 0:
-			adnum = 1
 		count = 0
 		prioq = Queue.PriorityQueue()
 		pmoves = game.get_possible_moves(pnum)
-		max_iterations = 2000
+		max_iterations = 500
 		for move in pmoves:
 			count = count + 1
 			g = game.copy()
@@ -64,8 +61,7 @@ class RAStarAgent:
 			g.make_move(move.function, move.args)
 			g.current_player = pnum
 			prioq.put(AStarMove(g, move, pnum, 0))
-			admove = adversary.decide(g, adnum)
-			g.make_move(admove.function, admove.args)
+			g.players_choosing_destination_cards = False
 		i = 0
 		while True:
 			i = i + 1
@@ -74,25 +70,27 @@ class RAStarAgent:
 			ATuple = prioq.get()
 			#print (str(ATuple.lnum) + ", " + str(ATuple.state.players[pnum].points) + ", " + str(ATuple.state.players[pnum].number_of_trains) + ", " + str(len(ATuple.state.players[pnum].hand)))
 			nstat = ATuple.state
+
 			#print nstat.players[pnum].number_of_trains
 			#print 'a'
 			if nstat.game_over == True:
-				print "Endgame found after " + str(i) + " iterations"
+				print "Endgame found after " + str(i) + " iterations with " + str(nstat.players[pnum].points) + " points" 
 				return ATuple.basemove
 			pmoves = nstat.get_possible_moves(pnum)
 			for move in pmoves:
 				#print 'b'
 				#print str(i) + ", " + str(miniprioq.qsize())
 				g = nstat.copy()
-				endflag = False
-				if(g.players[pnum].number_of_trains <= 2):
-					endflag = True
+				#endflag = False
+				#if(g.players[pnum].number_of_trains <= 2):
+				#	endflag = True
 				g.make_move(move.function, move.args)
-				if(endflag == True):
-					g.calculatePoints();
-					g.game_over = True
-				admov = adversary.decide(g, adnum)
-				g.make_move(admove.function, admove.args)
+				#if(endflag == True):
+				#	g.calculatePoints();
+				#	g.game_over = True
+				while g.current_player != pnum:
+					admove = adversary.decide(g, g.current_player)
+					g.make_move(admove.function, admove.args)
 				miniprioq.put(AStarMove(g, ATuple.basemove, pnum, ATuple.lnum + 1))
 				#print 'c'
 			index = 10
@@ -107,8 +105,8 @@ class RAStarAgent:
 
 			#print i
 		lastmove = prioq.get()
-		print "Search ended at layer: " + str(lastmove.lnum)
-		return prioq.get().basemove
+		print "Search ended at layer: " + str(lastmove.lnum) + " with " + str(lastmove.state.players[pnum].points) + " points"
+		return lastmove.basemove
 
 class AStarAgent:
 	def __init__(self):
@@ -118,7 +116,7 @@ class AStarAgent:
 		count = 0
 		prioq = Queue.PriorityQueue()
 		pmoves = game.get_possible_moves(pnum)
-		max_iterations = 2000
+		max_iterations = 500
 		for move in pmoves:
 			count = count + 1
 			g = game.copy()
@@ -138,7 +136,7 @@ class AStarAgent:
 			#print nstat.players[pnum].number_of_trains
 			#print 'a'
 			if nstat.game_over == True:
-				print "Endgame found after " + str(i) + " iterations"
+				print "Endgame found after " + str(i) + " iterations with " + str(nstat.players[pnum].points) + " points" 
 				return ATuple.basemove
 			pmoves = nstat.get_possible_moves(pnum)
 			for move in pmoves: 
@@ -167,8 +165,8 @@ class AStarAgent:
 
 			#print i
 		lastmove = prioq.get()
-		print "Search ended at layer: " + str(lastmove.lnum)
-		return prioq.get().basemove
+		print "Search ended at layer: " + str(lastmove.lnum) + " with " + str(lastmove.state.players[pnum].points) + " points"
+		return lastmove.basemove
 
 class GameHandler:
 	def __init__(self, game, agents):
@@ -184,17 +182,11 @@ class GameHandler:
 		
 		print (self.game.players_choosing_destination_cards)
 
-		while self.game.current_player != self.game.last_turn_player:
-			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains))
+		while self.game.game_over == False:
+			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains)) + ', ' + str(self.game.players[self.game.current_player].points)
 			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 			print(move.function)
 			#print self.game.players[self.game.current_player].hand
-			self.game.make_move(move.function, move.args)
-		print("Last Turn!")
-		for i in range(0, self.game.number_of_players):
-			print(i)
-			move = self.agents[i].decide(self.game.copy(), i)
-			print(move.function)
 			self.game.make_move(move.function, move.args)
 		#move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 		#self.game.make_move(move.function, move.args)
@@ -850,4 +842,21 @@ class Game:
 						if not (node2, node1) in visited:
 							print node1 + ", " + node2 + ": +" + str(self.point_table[self.board.graph[node1][node2][edge]['weight']])
 		
+	def getDCardScore(self, pnum):
+		rscore = 0
+		player = self.players[pnum]
+		player_graph = self.player_graph(pnum)
+		
+		for destination in player.hand_destination_cards:
+			try:
+				if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+					#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
+					rscore = rscore + destination.points
+				else:
+					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+					rscore = rscore - destination.points
+			except:
+				#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+				rscore = rscore - destination.points
+		return rscore
 
