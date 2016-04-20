@@ -6,6 +6,17 @@ import random
 import copy
 import Queue
 
+import multiprocessing as mp
+import copy_reg
+import types
+
+def _pickle_method(m):
+    if m.im_self is None:
+        return getattr, (m.im_class, m.im_func.func_name)
+    else:
+        return getattr, (m.im_self, m.im_func.func_name)
+
+copy_reg.pickle(types.MethodType, _pickle_method)
 
 class CopyAgent:
 	def __init__(self):
@@ -48,8 +59,22 @@ class RAStarAgent:
 	def __init__(self):
 		pass
 
-	def decide(self,game,pnum):
+	def executeMove(self, list_of_parameters):
+		move = list_of_parameters[0]
+		g_copy = list_of_parameters[1]
+		ATuple = list_of_parameters[2]
+		pnum = list_of_parameters[3]
+
 		adversary = Agent()
+		
+		g_copy.make_move(move.function, move.args)
+		while g_copy.current_player != pnum:
+			admove = adversary.decide(g_copy, g_copy.current_player)
+			g_copy.make_move(admove.function, admove.args)
+
+		return AStarMove(g_copy, ATuple.basemove, pnum, ATuple.lnum + 1)
+		
+	def decide(self,game,pnum):
 		count = 0
 		prioq = Queue.PriorityQueue()
 		pmoves = game.get_possible_moves(pnum)
@@ -77,21 +102,16 @@ class RAStarAgent:
 				print "Endgame found after " + str(i) + " iterations with " + str(nstat.players[pnum].points) + " points" 
 				return ATuple.basemove
 			pmoves = nstat.get_possible_moves(pnum)
+			list_of_parameters = []
 			for move in pmoves:
-				#print 'b'
-				#print str(i) + ", " + str(miniprioq.qsize())
-				g = nstat.copy()
-				#endflag = False
-				#if(g.players[pnum].number_of_trains <= 2):
-				#	endflag = True
-				g.make_move(move.function, move.args)
-				#if(endflag == True):
-				#	g.calculatePoints();
-				#	g.game_over = True
-				while g.current_player != pnum:
-					admove = adversary.decide(g, g.current_player)
-					g.make_move(admove.function, admove.args)
-				miniprioq.put(AStarMove(g, ATuple.basemove, pnum, ATuple.lnum + 1))
+				list_of_parameters.append([move, nstat.copy(), ATuple, pnum])
+
+			pool = mp.Pool()
+			results = pool.map(self.executeMove, list_of_parameters)
+			pool.terminate()
+			
+			for r in results:
+				miniprioq.put(r)
 				#print 'c'
 			index = 10
 			if miniprioq.qsize() < 10:
