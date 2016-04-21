@@ -67,11 +67,13 @@ class RAStarAgent:
 
 		adversary = Agent()
 		
+		#print 'exect: ' + str(move.function)
+
 		g_copy.make_move(move.function, move.args)
 		while g_copy.current_player != pnum:
 			admove = adversary.decide(g_copy, g_copy.current_player)
 			g_copy.make_move(admove.function, admove.args)
-
+		
 		return AStarMove(g_copy, ATuple.basemove, pnum, ATuple.lnum + 1)
 		
 	def decide(self,game,pnum):
@@ -90,14 +92,10 @@ class RAStarAgent:
 		i = 0
 		while True:
 			i = i + 1
-			#print str(i) + ", " + str(prioq.qsize())
 			miniprioq = Queue.PriorityQueue()
 			ATuple = prioq.get()
-			#print (str(ATuple.lnum) + ", " + str(ATuple.state.players[pnum].points) + ", " + str(ATuple.state.players[pnum].number_of_trains) + ", " + str(len(ATuple.state.players[pnum].hand)))
 			nstat = ATuple.state
 
-			#print nstat.players[pnum].number_of_trains
-			#print 'a'
 			if nstat.game_over == True:
 				print "Endgame found after " + str(i) + " iterations with " + str(nstat.players[pnum].points) + " points" 
 				return ATuple.basemove
@@ -112,14 +110,14 @@ class RAStarAgent:
 			
 			for r in results:
 				miniprioq.put(r)
-				#print 'c'
+
 			index = 10
 			if miniprioq.qsize() < 10:
 				index = miniprioq.qsize()
 			for x in range(0, index):
 				prioq.put(miniprioq.get())
 				count = count + 1
-				# print 'd'
+
 			if i > max_iterations:
 				break
 
@@ -148,20 +146,16 @@ class AStarAgent:
 		i = 0
 		while True:
 			i = i + 1
-			#print str(i) + ", " + str(prioq.qsize())
 			miniprioq = Queue.PriorityQueue()
 			ATuple = prioq.get()
-			#print (str(ATuple.lnum) + ", " + str(ATuple.state.players[pnum].points) + ", " + str(ATuple.state.players[pnum].number_of_trains) + ", " + str(len(ATuple.state.players[pnum].hand)))
 			nstat = ATuple.state
-			#print nstat.players[pnum].number_of_trains
-			#print 'a'
+
 			if nstat.game_over == True:
 				print "Endgame found after " + str(i) + " iterations with " + str(nstat.players[pnum].points) + " points" 
 				return ATuple.basemove
+
 			pmoves = nstat.get_possible_moves(pnum)
 			for move in pmoves: 
-				#print 'b'
-				#print str(i) + ", " + str(miniprioq.qsize())
 				g = nstat.copy()
 				endflag = False
 				if(g.players[pnum].number_of_trains <= 2):
@@ -172,18 +166,17 @@ class AStarAgent:
 					g.game_over = True
 				g.current_player = pnum
 				miniprioq.put(AStarMove(g, ATuple.basemove, pnum, ATuple.lnum + 1))
-				#print 'c'
+
 			index = 10
 			if miniprioq.qsize() < 10:
 				index = miniprioq.qsize()
 			for x in range(0, index):
 				prioq.put(miniprioq.get())
 				count = count + 1
-				# print 'd'
+
 			if i > max_iterations:
 				break
 
-			#print i
 		lastmove = prioq.get()
 		print "Search ended at layer: " + str(lastmove.lnum) + " with " + str(lastmove.state.players[pnum].points) + " points"
 		return lastmove.basemove
@@ -197,7 +190,15 @@ class GameHandler:
 		for i in range(0, self.game.number_of_players):
 			print(i)
 			move = self.agents[i].decide(self.game.copy(), i)
-			print(move.function)
+			#print(move.function)
+			#print 'args:'
+			#print move.args
+			#for c in move.args[1]:
+			#	print str(c)
+			#print 'hand:'
+			#print self.game.players[move.args[0]].hand
+			#for c in self.game.players[move.args[0]].hand:
+			#	print str(c)
 			self.game.make_move(move.function, move.args)
 		
 		print (self.game.players_choosing_destination_cards)
@@ -206,11 +207,15 @@ class GameHandler:
 			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains)) + ', ' + str(self.game.players[self.game.current_player].points)
 			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 			print(move.function)
-			#print self.game.players[self.game.current_player].hand
 			self.game.make_move(move.function, move.args)
-		#move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
-		#self.game.make_move(move.function, move.args)
 
+		print "P1 Destinations:"
+		for card in self.game.players[0].hand_destination_cards:
+			print str(card)
+		print '*******************************************'
+		print "P2 Destinations:"
+		for card in self.game.players[1].hand_destination_cards:
+			print str(card)
 		print("Player 1: " + str(self.game.players[0].points))
 		print("Player 2: "+ str(self.game.players[1].points))
 
@@ -264,6 +269,7 @@ class Player:
 	def copy(self):
 		p = Player(list(self.hand), self.number_of_trains, self.points)
 		p.hand_destination_cards = copy.copy(self.hand_destination_cards)
+		#p.hand_destination_cards = list(self.hand_destination_cards)
 		p.choosing_destination_cards = self.choosing_destination_cards
 		p.drawing_train_cards = self.drawing_train_cards
 		return p
@@ -521,6 +527,16 @@ class Game:
 	#PS: Destination cards get added to the players hand of train cards until he decides which ones to keep
 	def choose_destination_cards(self, player, cards):
 		min_num_cards = 2 if self.players_choosing_destination_cards else 1
+
+		temp = []
+		for card in cards:
+			for c in self.players[player].hand:
+				if type(c) != str:
+					if card.destinations == c.destinations and card.points == c.points:
+						temp.append(c)
+						break
+
+		cards = temp
 
 		#print "cards:" + str(cards)
 		
@@ -806,8 +822,9 @@ class Game:
 					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].drawing_train_cards == True:
 			pmoves.append(Move('drawTrainCard', 'top'))
-			for card in self.train_cards_face_up:
-				pmoves.append(Move('drawTrainCard', card))
+			for card in set(self.train_cards_face_up):
+				if card != 'wild':
+					pmoves.append(Move('drawTrainCard', card))
 				#pmoves.append(Move(self.move_drawTrainCard, card))				
 		else:
 			colors = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
@@ -833,7 +850,7 @@ class Game:
 				pmoves.append(Move('drawTrainCard', 'top'))
 				#pmoves.append(Move(self.move_drawTrainCard, 'top'))
 			if len(self.train_cards_face_up) > 0:
-				for card in self.train_cards_face_up:
+				for card in set(self.train_cards_face_up):
 					pmoves.append(Move('drawTrainCard', card))
 					#pmoves.append(Move(self.move_drawTrainCard, card))
 		return pmoves
