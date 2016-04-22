@@ -5,6 +5,7 @@ import itertools
 import random
 import copy
 import Queue
+import pickle
 
 
 class CopyAgent:
@@ -175,9 +176,10 @@ class LogMove:
 		self.args = args
 
 class GameHandler:
-	def __init__(self, game, agents):
+	def __init__(self, game, agents, filename):
 		self.game = game
 		self.agents = agents
+		self.filename = filename
 
 	def play(self):
 		movelog = []
@@ -202,6 +204,8 @@ class GameHandler:
 		#self.game.make_move(move.function, move.args)
 		for i in range(0, self.game.number_of_players):
 			print("Player " + str(i+1) + ": " + str(self.game.players[i].points))
+
+		pickle.dump(filename + '.go', ())
 
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
@@ -795,8 +799,9 @@ class Game:
 					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].drawing_train_cards == True:
 			pmoves.append(Move('drawTrainCard', 'top'))
-			for card in self.train_cards_face_up:
-				pmoves.append(Move('drawTrainCard', card))
+			for card in set(self.train_cards_face_up):
+				if card != 'wild':
+					pmoves.append(Move('drawTrainCard', card))
 				#pmoves.append(Move(self.move_drawTrainCard, card))				
 		else:
 			colors = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
@@ -822,7 +827,7 @@ class Game:
 				pmoves.append(Move('drawTrainCard', 'top'))
 				#pmoves.append(Move(self.move_drawTrainCard, 'top'))
 			if len(self.train_cards_face_up) > 0:
-				for card in self.train_cards_face_up:
+				for card in set(self.train_cards_face_up):
 					pmoves.append(Move('drawTrainCard', card))
 					#pmoves.append(Move(self.move_drawTrainCard, card))
 		return pmoves

@@ -66,6 +66,7 @@ def show_graph(A):
 	egreen = [(u,v) for (u,v,d) in A.edges(data=True) if d['color'] == 'GREEN' and d['owner'] == -1]
 	eplayer1 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 0]
 	eplayer2 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 1]
+	eplayer3 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 2]
 
 	#pos=nx.spring_layout(A) # positions for all nodes
 	pos = {}
@@ -89,6 +90,7 @@ def show_graph(A):
 	nx.draw_networkx_edges(A,pos,edgelist=egreen,width=6,edge_color='#00ff00')
 	nx.draw_networkx_edges(A,pos,edgelist=eplayer1,width=6,edge_color='#0000ff',style='dashed')
 	nx.draw_networkx_edges(A,pos,edgelist=eplayer2,width=6,edge_color='#84ff00',style='dashed')
+	nx.draw_networkx_edges(A,pos,edgelist=eplayer3,width=6,edge_color='#c71414',style='dashed')
 	#nx.draw_networkx_edges(A,pos,edgelist=elarge,width=6,edge_color='#00ff00')
 	#nx.draw_networkx_edges(A,pos,edgelist=esmall,width=6,alpha=0.5,edge_color='#0000ff',style='dashed')
 	# labels
