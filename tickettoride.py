@@ -168,15 +168,23 @@ class AStarAgent:
 		print "Search ended at layer: " + str(lastmove.lnum) + " with " + str(lastmove.state.players[pnum].points) + " points"
 		return lastmove.basemove
 
+class LogMove:
+	def __init__(pnum, move, args):
+		self.pnum = pnum
+		self.move = move
+		self.args = args
+
 class GameHandler:
 	def __init__(self, game, agents):
 		self.game = game
 		self.agents = agents
 
 	def play(self):
+		movelog = []
 		for i in range(0, self.game.number_of_players):
 			print(i)
 			move = self.agents[i].decide(self.game.copy(), i)
+			movelog.append(LogMove(i, move.function, move.args))
 			print(move.function)
 			self.game.make_move(move.function, move.args)
 		
@@ -185,14 +193,15 @@ class GameHandler:
 		while self.game.game_over == False:
 			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains)) + ', ' + str(self.game.players[self.game.current_player].points)
 			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
+			movelog.append(LogMove(self.game.current_player, move.function, move.args))
 			print(move.function)
 			#print self.game.players[self.game.current_player].hand
 			self.game.make_move(move.function, move.args)
+
 		#move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 		#self.game.make_move(move.function, move.args)
-
-		print("Player 1: " + str(self.game.players[0].points))
-		print("Player 2: "+ str(self.game.players[1].points))
+		for i in range(0, self.game.number_of_players):
+			print("Player " + str(i+1) + ": " + str(self.game.players[i].points))
 
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
