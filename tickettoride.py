@@ -203,7 +203,7 @@ class GameHandler:
 		self.agents = agents
 		self.filename = filename
 
-	def play(self):
+	def play(self, runnum):
 		movelog = []
 		for i in range(0, self.game.number_of_players):
 			print(i)
@@ -227,8 +227,8 @@ class GameHandler:
 		for i in range(0, self.game.number_of_players):
 			print("Player " + str(i+1) + ": " + str(self.game.players[i].points))
 
-		f1 = open(self.filename + '.go', 'wb')
-		f2 = open(self.filename + '.ml', 'wb')
+		f1 = open(self.filename + str(runnum) + '.go', 'wb')
+		f2 = open(self.filename + str(runnum) + '.ml', 'wb')
 		pickle.dump(self.game, f1)
 		pickle.dump(movelog, f2)
 		f1.close()
