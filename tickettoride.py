@@ -7,6 +7,16 @@ import copy
 import Queue
 import pickle
 
+import copy_reg
+import types
+
+def _pickle_method(m):
+    if m.im_self is None:
+        return getattr, (m.im_class, m.im_func.func_name)
+    else:
+        return getattr, (m.im_self, m.im_func.func_name)
+
+copy_reg.pickle(types.MethodType, _pickle_method)
 
 class CopyAgent:
 	def __init__(self):
@@ -170,10 +180,22 @@ class AStarAgent:
 		return lastmove.basemove
 
 class LogMove:
-	def __init__(pnum, move, args):
+	def __init__(self, pnum, move, args):
 		self.pnum = pnum
 		self.move = move
-		self.args = args
+		self.args = []
+		if 'TrainCard' in move:
+			self.args.append(args)
+		else:
+			for arg in args:
+				if type(arg) == list and type(arg[0]) != str:
+					for subarg in arg:
+						self.args.append(str(subarg))
+				else:
+					self.args.append(arg)
+
+	def __getstate__(self): return self.__dict__
+	def __setstate__(self, d): self.__dict__.update(d)
 
 class GameHandler:
 	def __init__(self, game, agents, filename):
@@ -205,7 +227,12 @@ class GameHandler:
 		for i in range(0, self.game.number_of_players):
 			print("Player " + str(i+1) + ": " + str(self.game.players[i].points))
 
-		pickle.dump(filename + '.go', ())
+		f1 = open(self.filename + '.go', 'wb')
+		f2 = open(self.filename + '.ml', 'wb')
+		pickle.dump(self.game, f1)
+		pickle.dump(movelog, f2)
+		f1.close()
+		f2.close()
 
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
@@ -414,6 +441,9 @@ class Game:
 		self.last_turn_player = -1
 		self.moves_reference = {}
 		self.game_over = False
+	
+	def __getstate__(self): return self.__dict__
+	def __setstate__(self, d): self.__dict__.update(d)
 
 	def set_moves_reference(self):
 		self.moves_reference['chooseDestinationCards'] = self.move_choose_destination_cards

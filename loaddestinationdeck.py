@@ -5,6 +5,9 @@ class DestinationCard:
 		self.destinations = [dest1, dest2]
 		self.points = points
 	
+	def __getstate__(self): return self.__dict__
+	def __setstate__(self, d): self.__dict__.update(d)
+
 	def __str__(self):
 		return str(self.destinations) + " " + str(self.points)
 
