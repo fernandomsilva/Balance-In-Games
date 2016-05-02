@@ -5,22 +5,29 @@ from Visualization import *
 import multiprocessing as mp
 
 def run(i):
-	game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
+	game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
 	game_object.setup()
 
-	gh = GameHandler(game_object, [AStarAgent(), RAStarAgent(), Agent()], 'data/testdata')
+	gh = GameHandler(game_object, [AStarAgent(), RAStarAgent(), TrollStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
 
-	gh.play(i)
+	#gh.play(i)
+	return game_object
 
-if __name__ == '__main__':
-	pool = mp.Pool()
+#if __name__ == '__main__':
+#	pool = mp.Pool()
+#
+#	anything = range(0, 20)
+#
+#	pool.map(run, anything)
+#
+#	pool.terminate()
+#t = run(0)
 
-	anything = range(0, 20)
+game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
+game_object.setup()
 
-	pool.map(run, anything)
-
-	pool.terminate()
-
-#pythonshow_graph(game_object.board.graph)
+gh = GameHandler(game_object, [AStarAgent(), TrollStarAgent(), EAStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
+gh.play(0)
+pythonshow_graph(game_object.board.graph)
 #g.choose_destination_cards(0, [g.players[0].hand[-1], g.players[0].hand[-2]])
 #g.choose_destination_cards(1, [g.players[1].hand[-1], g.players[1].hand[-2]])
