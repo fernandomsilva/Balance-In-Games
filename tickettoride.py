@@ -795,7 +795,18 @@ class Game:
 		
 		for player in longest_route_player:
 			self.players[player].points = self.players[player].points + 10
-	
+
+	def returnCurrentPoints(self, player):
+            player_graph = self.player_graph(self.players.index(player))
+            for destination in player.hand_destination_cards:
+                try:
+                    if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+                        player.points = player.points + destination.points
+                    else:
+                        player.points = player.points - destination.points
+                except:
+                    player.points = player.points - destination.points
+
 	#calculates the longest route of a player
 	#G => the graph from which to calculate (use a graph return by the function player_graph above)
 	#source => the node from which to start
