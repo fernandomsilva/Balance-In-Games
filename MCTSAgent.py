@@ -1,7 +1,11 @@
 from tickettoride import *
 from mcts import *
-import numpy as np
 import networkx as nx
+from mcts.mcts import *
+from mcts.graph import *
+from mcts.tree_policies import *
+from mcts.default_policies import *
+from mcts.backups import *
 
 class tickettorideAction(object):
     def __init__(self, action):
@@ -9,6 +13,12 @@ class tickettorideAction(object):
 
     def __eq__(self, other):
         return self.action == other.action
+
+    def getFunction(self):
+        return self.action.function
+
+    def getArgs(self):
+        return self.action.args
 
 class tickettorideState(object):
     def __init__(self, game, actions, pnum):
@@ -19,27 +29,25 @@ class tickettorideState(object):
         self.pnum = pnum
 
     def perform(self, action):
-        game = self.game.copy()
-        game.make_move(action.function, action.args)
-        return tickettorideState(game)
+        print("performing " + action.getFunction())
+        #game = self.state.copy()
+        self.state.make_move(action.getFunction(), action.getArgs())
+        if (action.getFunction() == "drawTrainCard"):
+            print("game getting set to game over")
+            self.state.game_over = True
+        self.state.players_choosing_destination_cards = False
+        self.state.current_player = self.pnum
+        return tickettorideState(self.state, self.state.get_possible_moves(self.pnum), self.pnum)
 
     def reward(self, parent, action):
-        destpoints = 0
-        opengraph = self.state.player_plus_free_graph(self.pnum)
-        dcards = self.state.players[self.pnum].hand_destination_cards
-        for destcard in dcards:
-            try:
-                spath = nx.shortest_path(opengraph, destcard.destinations[0], destcard.destinations[1])
-                for i in range(0, len(spath) - 1):
-                    for edge in opengraph[destcard.destinations[0]][destcard.destinations[1]]:
-                        if self.state.board.graph[destcard.destinations[0]][destcard.destinations[1]][edge]['owner'] == self.pnum:
-                            destpoints = destpoints + 50
-            except:
-                pass
-        return (destpoints + self.state.players[self.pnum].points) * -1
+        points = self.state.players[self.pnum].points * -1 - self.state.getDCardScore(self.pnum)
+        return points
 
     def is_terminal(self):
-        return False
+        if(self.state.players[self.pnum].number_of_trains <= 2):
+            print("Game over reached!")
+            self.state.game_over = True
+        return self.state.game_over
 
     def __eq__(self, other):
         return self.action == other.action
@@ -52,5 +60,8 @@ class MCTSAgent:
         mcts = MCTS(tree_policy=UCB1(c=1.41),
                     default_policy=random_terminal_roll_out,
                     backup=monte_carlo)
-        root = StateNode(tickettorideState(game, game.get_possible_moves(pnum), pnum))
-        return mcts(root)
+
+        root = StateNode(None, tickettorideState(game, game.get_possible_moves(pnum), pnum))
+        best_action = mcts(root)
+        print("the best action was: " + best_action.function)
+        return best_action

@@ -1,11 +1,6 @@
 from . import *
 
-import os
-for name in os.listdir("plugins"):
-    if name.endswith(".py"):
-          #strip the extension
-         module = name[:-3]
-         # set the module name in the current global name space:
-         globals()[module] = __import__(os.path.join("plugins", name))
-
-__author__ = 'xflyter'
+from os.path import dirname, basename, isfile
+import glob
+modules = glob.glob(dirname(__file__)+"/*.py")
+__all__ = [ basename(f)[:-3] for f in modules if isfile(f)]
