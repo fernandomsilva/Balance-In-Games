@@ -33,11 +33,20 @@ class PathAgent:
 							weight = game.board.graph[temp[i]][temp[i+1]][0]['weight']
 
 						if weight < game.players[pnum].number_of_trains:
-							paths_to_take.append(((-1) * (weight + 2 * destination['points']), temp[i], temp[i+1]))
-		
+							paths_to_take.append(((-1) * (game.point_table[weight] + 2 * destination['points']), temp[i], temp[i+1]))
+
+		free_connections_graph = self.free_routes_graph(game.board.graph, game.number_of_players)
+
+		if len(paths_to_take) == 0:
+			for node1 in free_connections_graph:
+				for node2 in free_connections_graph[node1]:
+					for key in free_connections_graph[node1][node2]:
+						if game.board.graph[node1][node2][key]['weight'] < game.players[pnum].number_of_trains:
+							paths_to_take.apend((game.point_table[weight], node1, node2))
+
 		for path in paths_to_take:
 			p_queue.put(path)
-		
+
 		#while not p_queue.empty():
 		if not p_queue.empty():
 			move = p_queue.get()
