@@ -50,9 +50,6 @@ def show_graph(A):
 	'NEW ORLEANS': {'x': 29.985846, 'y': -90.082514},
 	'HOUSTON': {'x': 29.829152, 'y': -95.365634}}
 
-	A['TORONTO']['PITTSBURGH'][0]['owner'] = 0
-	A['HELENA']['OMAHA'][0]['owner'] = 1
-
 	#elarge=[(u,v) for (u,v,d) in A.edges(data=True) if d['weight'] >3]
 	#esmall=[(u,v) for (u,v,d) in A.edges(data=True) if d['weight'] <=3]
 	egray = [(u,v) for (u,v,d) in A.edges(data=True) if d['color'] == 'GRAY' and d['owner'] == -1]
@@ -67,7 +64,7 @@ def show_graph(A):
 	eplayer1 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 0]
 	eplayer2 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 1]
 	eplayer3 = [(u,v) for (u,v,d) in A.edges(data=True) if d['owner'] == 2]
-
+	
 	#pos=nx.spring_layout(A) # positions for all nodes
 	pos = {}
 	pos_label = {}

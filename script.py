@@ -3,6 +3,7 @@ from loadgraphfile import *
 from loaddestinationdeck import *
 from Visualization import *
 import multiprocessing as mp
+from PathAgent import *
 
 def run(i):
 	game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
@@ -23,11 +24,16 @@ def run(i):
 #	pool.terminate()
 #t = run(0)
 
-game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
+#game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
+game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0)], 0)
 game_object.setup()
 
-gh = GameHandler(game_object, [AStarAgent(), TrollStarAgent(), EAStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
+#gh = GameHandler(game_object, [AStarAgent(), TrollStarAgent(), EAStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
+#gh.play(0)
+gh = GameHandler(game_object, [Agent(), Agent()], 'data/testdata')
 gh.play(0)
-pythonshow_graph(game_object.board.graph)
-#g.choose_destination_cards(0, [g.players[0].hand[-1], g.players[0].hand[-2]])
-#g.choose_destination_cards(1, [g.players[1].hand[-1], g.players[1].hand[-2]])
+
+pa = PathAgent()
+pa.decide(game_object, 0)
+
+#show_graph(game_object.board.graph)

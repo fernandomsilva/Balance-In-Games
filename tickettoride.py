@@ -450,7 +450,7 @@ class GameHandler:
 		self.agents = agents
 		self.filename = filename
 
-	def play(self, runnum):
+	def play(self, runnum, save=False):
 		movelog = []
 		for i in range(0, self.game.number_of_players):
 			print(i)
@@ -474,12 +474,13 @@ class GameHandler:
 		for i in range(0, self.game.number_of_players):
 			print("Player " + str(i+1) + ": " + str(self.game.players[i].points))
 
-		f1 = open(self.filename + str(runnum) + '.go', 'wb')
-		f2 = open(self.filename + str(runnum) + '.ml', 'wb')
-		pickle.dump(self.game, f1)
-		pickle.dump(movelog, f2)
-		f1.close()
-		f2.close()
+		if save:
+			f1 = open(self.filename + str(runnum) + '.go', 'wb')
+			f2 = open(self.filename + str(runnum) + '.ml', 'wb')
+			pickle.dump(self.game, f1)
+			pickle.dump(movelog, f2)
+			f1.close()
+			f2.close()
 
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
