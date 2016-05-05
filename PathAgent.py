@@ -1,11 +1,19 @@
 import networkx as nx
 import Queue
+import collections
 
 class PathAgent:
 	def __init__(self):
 		pass
 
 	def decide(self, game, pnum):
+		possible_moves = game.get_possible_moves(pnum)
+		
+		if possible_moves[0].function == 'chooseDestinationCards':
+			for m in possible_moves:
+				if len(m.args[1]) == 3:
+					return m
+	
 		p_queue = Queue.PriorityQueue()
 
 		list_of_destinations = self.destinations_not_complete(game.players[pnum].hand_destination_cards, game.player_graph(pnum))
@@ -21,7 +29,15 @@ class PathAgent:
 		
 		paths_to_take = []
 		for destination in list_of_destinations:
-			temp = nx.shortest_path(joint_graph, destination['city1'], destination['city2'])
+			#if destination['city1'] in joint_graph and destination['city2'] in joint_graph:
+			#	print 'YES: ' + destination['city1'] + " : " + destination['city2']
+			#else:
+			#	print 'NO : ' + destination['city1'] + " : " + destination['city2']
+			
+			try:
+				temp = nx.shortest_path(joint_graph, destination['city1'], destination['city2'])
+			except:
+				continue
 
 			for i in range(0, len(temp)-1):
 				if (temp[i], temp[i+1]) not in player_edges and (temp[i+1], temp[i]) not in player_edges:
@@ -42,7 +58,7 @@ class PathAgent:
 				for node2 in free_connections_graph[node1]:
 					for key in free_connections_graph[node1][node2]:
 						if game.board.graph[node1][node2][key]['weight'] < game.players[pnum].number_of_trains:
-							paths_to_take.apend((game.point_table[weight], node1, node2))
+							paths_to_take.append((game.point_table[game.board.graph[node1][node2][key]['weight']], node1, node2))
 
 		for path in paths_to_take:
 			p_queue.put(path)
@@ -50,7 +66,7 @@ class PathAgent:
 		#while not p_queue.empty():
 		if not p_queue.empty():
 			move = p_queue.get()
-			print move
+			#print move
 			color = []
 			try:
 				edges = game.board.graph[move[1]][move[2]]
@@ -61,14 +77,68 @@ class PathAgent:
 				for key in edges:
 					color.append(game.board.graph[move[2]][move[1]][key]['color'])
 
-			print color
+			
+			if "GRAY" in color:
+				#print "GG"
+				color = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
+
+			color_count = collections.Counter(game.players[pnum].hand)
+			max_count = 0
+			max_color = color[0]
+
+			#print "cc: " + str(color_count)
+				
+			for c in color:
+				if c.lower() in color_count:
+					if color_count[c.lower()] > max_count:
+						max_count = color_count[c.lower()]
+						max_color = c
+			
+			#print "1: " + max_color
+			
+			moves_available = []
+			for m in possible_moves:
+				if m.function == 'claimRoute':
+					if (m.args[0] == move[1] and m.args[1] == move[2]) or (m.args[0] == move[2] and m.args[1] == move[1]):
+						moves_available.append(m)
+			
+			if len(moves_available) > 0:
+				#print "if"
+				return_move = None
+				for m in moves_available:
+					#print m.function
+					#print m.args
+					if m.args[2] == max_color:
+						return_move = m
+						break
+				
+				#print "return_move: " + return_move.function + " : " + str(return_move.args)
+				return return_move
+			
+			else:
+				#print "else"
+				top_draw = None
+				for m in possible_moves:
+					if m.function == 'drawTrainCard':
+						#print m.args
+						if m.args == max_color:
+							return m
+						elif m.args == 'top':
+							top_draw = m
+				
+				return top_draw
+			
+		for m in possible_moves:
+			if m.function == 'drawTrainCard' and m.args == 'top':
+				return m
+				
 		#for (city1, city2) in paths_to_take:
 		#	try:
 		#		p_queue.
 		#	except:
 
 		#print player_edges
-		print paths_to_take
+		#print paths_to_take
 		#print game.board.get_free_connection(paths_to_take[0][0], paths_to_take[0][1], 'GRAY')
 		#print game.board.get_free_connection(paths_to_take[0][0], paths_to_take[0][1], 'BLACK')
 		#print game.board.get_free_connection(paths_to_take[0][0], paths_to_take[0][1], 'BLUE')
