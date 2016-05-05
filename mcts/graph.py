@@ -12,6 +12,7 @@ class ActionNode(Node):
     """
     def __init__(self, parent, action):
         super(ActionNode, self).__init__(parent)
+        #print("action node being creted with action " + action.action.function)
         self.action = action
         self.n = 0
 
@@ -31,6 +32,7 @@ class ActionNode(Node):
             state = self.parent.state.perform(self.action)
 
         if state not in self.children:
+            #print("state not in self.children (but should it be?)")
             self.children[state] = StateNode(self, state)
 
         if real_world:
@@ -48,6 +50,7 @@ class StateNode(Node):
     """
     def __init__(self, parent, state):
         super(StateNode, self).__init__(parent)
+        #print("state node being created with parent: " + str(state))
         self.state = state
         self.reward = 0
         for action in state.actions:

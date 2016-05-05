@@ -7,7 +7,7 @@ from . import utils
 class MCTS(object):
     """
     The central MCTS class, which performs the tree search. It gets a
-    tree policy, a default policy, and a backup strategy.
+    tree policy, a default policy, and a backup strategy.search
     See e.g. Browne et al. (2012) for a survey on monte carlo tree search
     """
     def __init__(self, tree_policy, default_policy, backup):
@@ -37,7 +37,6 @@ class MCTS(object):
 def _expand(state_node):
     action = random.choice(state_node.untried_actions)
     return state_node.children[action].sample_state()
-
 
 def _best_child(state_node, tree_policy):
     best_action_node = utils.rand_max(state_node.children.values(),
