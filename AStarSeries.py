@@ -1,6 +1,7 @@
 import networkx as nx
 import Queue
 import collections
+import random
 
 class CopyAgent:
 	def __init__(self):

@@ -125,7 +125,8 @@ class Player:
 
 	def copy(self):
 		p = Player(list(self.hand), self.number_of_trains, self.points)
-		p.hand_destination_cards = copy.copy(self.hand_destination_cards)
+		#p.hand_destination_cards = copy.copy(self.hand_destination_cards)
+		p.hand_destination_cards = self.hand_destination_cards[:]		
 		p.choosing_destination_cards = self.choosing_destination_cards
 		p.drawing_train_cards = self.drawing_train_cards
 		return p
@@ -157,8 +158,10 @@ class CardManager:
 		return len(self.deck)
 
 	def copy(self):
-		c = CardManager(copy.copy(self.deck))
-		c.discard_pile = copy.copy(self.discard_pile)
+		#c = CardManager(copy.copy(self.deck))
+		#c.discard_pile = copy.copy(self.discard_pile)
+		c = CardManager(self.deck[:])
+		c.discard_pile = self.discard_pile[:]
 		return c
 
 	#returns a randomly picked card from the list (deck)
@@ -178,7 +181,8 @@ class CardManager:
 
 	#assumes an empty deck. Puts all cards from the discard pile back in the deck. Empties the discard_pile
 	def reshuffle(self):
-		self.deck = copy.copy(self.discard_pile)
+		#self.deck = copy.copy(self.discard_pile)
+		self.deck = self.discard_pile[:]
 		self.discard_pile = []
 
 #class to encapsulate the Board (represented by a graph from the library networkx)
@@ -297,7 +301,8 @@ class Game:
 		copy_players = []
 		for p in self.players:
 			copy_players.append(p.copy())
-		g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
+		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
+		g = Game(self.board.copy(), self.point_table, [], [], copy_players, self.current_player)
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
