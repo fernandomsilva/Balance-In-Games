@@ -35,10 +35,70 @@ class AStarMove:
 		self.lnum = lnum
 
 	def __int__(self):
-		return self.state.players[self.pnum].points * -1 - self.state.getDCardScore(self.pnum)
+		return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
+		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 
 	def __cmp__(self, other):
 		return cmp(int(self), int(other))
+
+	def weightPath(self):
+		incomplete_dest = []
+		player_graph = self.state.player_graph(self.pnum)
+		free_routes = self.free_routes_graph(self.state.board.graph, self.state.number_of_players)
+		result = 0
+
+		joint_graph = free_routes
+		for edge in player_graph.edges():
+			joint_graph.add_edge(edge[0], edge[1], weight=0, color='none', owner=self.pnum)
+
+		for destination in self.state.players[self.pnum].hand_destination_cards:
+			try:
+				if not nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+					incomplete_dest.append(destination)
+			except:
+				incomplete_dest.append(destination)
+
+		for destination in incomplete_dest:
+			try:
+				temp = nx.shortest_path(joint_graph, destination.destinations[0], destination.destinations[1])
+			except:
+				temp = None
+
+			if temp != None:
+				for i in range(0, len(temp) - 1):
+					try:
+						if nx.has_path(player_graph, temp[i], temp[i+1]):
+							#print temp[i] + " : " + temp[i+1]
+							result = result + (destination.points * 2)
+					except:
+						pass
+
+		return result
+
+
+
+	def free_routes_graph(self, graph, number_of_players):
+		G = nx.MultiGraph()
+
+		visited_nodes = []
+		
+		for node1 in graph:
+			for node2 in graph[node1]:
+				if node2 not in visited_nodes:
+					locked = False
+					for edge in graph[node1][node2]:
+						if number_of_players < 3:
+							if graph[node1][node2][edge]['owner'] != -1:
+								locked = True
+
+					if not locked:
+						for edge in graph[node1][node2]:
+							G.add_edge(node1, node2, weight=graph[node1][node2][edge]['weight'], color=graph[node1][node2][edge]['color'], owner=-1)
+
+			visited_nodes.append(node1)
+		
+		return G
+
 
 class RAStarAgent:
 	def __init__(self):
