@@ -58,7 +58,11 @@ class GameHandler:
 		while self.game.game_over == False:
 			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains)) + ', ' + str(self.game.players[self.game.current_player].points)
 			move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
-			movelog.append(LogMove(self.game.current_player, move.function, move.args))
+			try:
+				movelog.append(LogMove(self.game.current_player, move.function, move.args))
+			except:
+				print 'NO MORE MOVES!!!'
+				return
 			print(move.function)
 			#print self.game.players[self.game.current_player].hand
 			self.game.make_move(move.function, move.args)
@@ -229,7 +233,7 @@ class Board:
 	def get_free_connection(self, city1, city2, color, number_of_players=2):
 		connections = self.get_connection(city1, city2)
 		locked = False
-		if number_of_players < 3:
+		if number_of_players < 4:
 			for c in connections:
 				if connections[c]['owner'] != -1:
 					locked = True
