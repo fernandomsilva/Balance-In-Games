@@ -6,7 +6,7 @@ import random
 import copy
 import Queue
 import pickle
-
+import time
 import copy_reg
 import types
 
@@ -46,6 +46,7 @@ class GameHandler:
 
 	def play(self, runnum, save=False):
 		movelog = []
+		start = time.time()
 		for i in range(0, self.game.number_of_players):
 			print(i)
 			move = self.agents[i].decide(self.game.copy(), i)
@@ -79,6 +80,8 @@ class GameHandler:
 			pickle.dump(movelog, f2)
 			f1.close()
 			f2.close()
+
+		print "Total game length: " + str(time.time() - start)
 
 #returns the train deck (a list of strings)
 #number_of_color_cards => an integer that defines the number of each of the non-wild cards in the deck
