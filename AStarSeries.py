@@ -35,11 +35,37 @@ class AStarMove:
 		self.lnum = lnum
 
 	def __int__(self):
-		return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
+		return (-1) * (self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore())
+		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 
 	def __cmp__(self, other):
 		return cmp(int(self), int(other))
+
+	def getDCardScore(self):
+		rscore = 0
+		player = self.state.players[self.pnum]
+		player_graph = self.state.player_graph(self.pnum)
+		min_dest_number_of_trains = 0
+
+		for destination in player.hand_destination_cards:
+			try:
+				if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+					#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
+					rscore = rscore + destination.points
+				else:
+					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+					min_dest_number_of_trains = min_dest_number_of_trains + destination.points
+					rscore = rscore - destination.points
+			except:
+				#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+				rscore = rscore - destination.points
+
+		if player.number_of_trains < min_dest_number_of_trains:
+			rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
+
+		return rscore
+
 
 	def weightPath(self):
 		incomplete_dest = []
