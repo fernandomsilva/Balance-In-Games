@@ -63,6 +63,9 @@ class GameHandler:
 				movelog.append(LogMove(self.game.current_player, move.function, move.args))
 			except:
 				print 'NO MORE MOVES!!!'
+				f1 = open('disaster' + '.go', 'wb')
+				pickle.dump(self.game, f1)
+				f1.close()
 				return
 			print(move.function)
 			#print self.game.players[self.game.current_player].hand
@@ -314,6 +317,7 @@ class Game:
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
 		g.players_choosing_destination_cards = self.players_choosing_destination_cards
+		g.last_turn_player = self.last_turn_player
 		return g
 
 	#sets up the initial state of the players hands, face up cards and etc
@@ -355,6 +359,8 @@ class Game:
 	#adds a new face up train cards
 	#makes sure to never have 3 wild cards face up at the same time (rulebook)
 	def addFaceUpTrainCard(self):
+		if len(self.train_deck.deck) == 0:
+			self.train_deck.reshuffle()
 		if len(self.train_deck.deck) > 0:
 			card = self.draw_card(self.train_deck)
 
@@ -703,7 +709,7 @@ class Game:
 				for cardset in comb:
 					pmoves.append(Move('chooseDestinationCards', [player_index, list(cardset)]))
 					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
-		elif self.players[player_index].drawing_train_cards == True:
+		elif self.players[player_index].drawing_train_cards == True and len(self.train_deck.deck) > 0:
 			pmoves.append(Move('drawTrainCard', 'top'))
 			for card in set(self.train_cards_face_up):
 				if card != 'wild':
