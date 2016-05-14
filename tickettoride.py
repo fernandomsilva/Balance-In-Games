@@ -334,6 +334,7 @@ class Game:
 			self.players[i].choosing_destination_cards = True
 
 		self.current_player = random.choice([x for x in range(0, self.number_of_players)])
+		self.who_went_first = self.current_player
 		self.players_choosing_destination_cards = True
 
 		for i in range(0, 5):
