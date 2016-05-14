@@ -68,7 +68,7 @@ class TreeNode:
 
 	def propagate(self, winint):
 		self.denominator = self.denominator + 1
-		print winint
+		#print winint
 		self.numerator = self.numerator + winint
 		if self.parent != None:
 			self.parent.propagate(winint)

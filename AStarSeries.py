@@ -630,7 +630,7 @@ class TAStarAgent:
 		i = 0
 		while True:
 			i = i + 1
-			print i
+			#print i
 			#print str(i) + ", " + str(prioq.qsize())
 			miniprioq = Queue.PriorityQueue()
 			ATuple = prioq.get()

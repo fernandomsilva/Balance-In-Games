@@ -19,11 +19,11 @@ class PathAgent:
 			except:
 				return None
 				pass
-		print move.function + ", " + str(move.args)
-		print game.train_cards_face_up
-		print game.train_deck.deck
-		print game.destination_deck.deck
-		print len(game.train_deck.deck) > 0
+		#print move.function + ", " + str(move.args)
+		#print game.train_cards_face_up
+		#print game.train_deck.deck
+		#print game.destination_deck.deck
+		#print len(game.train_deck.deck) > 0
  		return move
 
 	def pathdecide(self, game, pnum):
@@ -31,8 +31,8 @@ class PathAgent:
 		if len(possible_moves) == 0:
 			return None
 
-		for m in possible_moves:
-			print m.function + ", " + str(m.args)
+		#for m in possible_moves:
+			#print m.function + ", " + str(m.args)
 		
 		if possible_moves[0].function == 'chooseDestinationCards':
 			for m in possible_moves:
