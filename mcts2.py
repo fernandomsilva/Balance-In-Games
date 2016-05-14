@@ -1,39 +1,53 @@
 from AStarSeries import *
 from tickettoride import *
+from PathAgent import *
+import math
 
 class TreeNode:
 	def __init__(self, game, pnum, parent, move):
 		self.state = game
 		self.pnum = pnum
-		self.numerator = self.rollout(pnum, state)
+		self.numerator = self.rollout(pnum, game)
 		self.denominator = 1
 		self.children = []
 		self.parent = parent
 		self.move = move
 
 	def expand(self):
-		randomAgent = Agent()
+		
 		g = self.state.copy()
+		#try:
+		#	randomAgent = PathAgent()
+		#	move = randomAgent.decide(g, g.current_player)
+		#	g.make_move(move.function, move.args)
+		#except:
+		randomAgent = Agent()
 		move = randomAgent.decide(g, g.current_player)
 		g.make_move(move.function, move.args)
-		expanded = Treenode(g, self.pnum, self, move)
-		children.append(expanded)
+		expanded = TreeNode(g, self.pnum, self, move)
+		self.children.append(expanded)
 		self.propagate(expanded.numerator)
 
-	def expand(self, move):
-		randomAgent = Agent()
+	def expand2(self, move):
 		g = self.state.copy()
 		g.make_move(move.function, move.args)
-		expanded = Treenode(g, self.pnum, self, move)
-		children.append(expanded)
+		expanded = TreeNode(g, self.pnum, self, move)
+		self.children.append(expanded)
 		self.propagate(expanded.numerator)
 
 	def rollout(self, pnum, node):
+		
 		self.state.players_choosing_destination_cards = False
 		g = self.state.copy()
+		pathAgent = PathAgent()
 		randomAgent = Agent()
+		count = 0
 		while g.game_over != True:
-			rmove = Agent.decide(g, g.current_player)
+			#try:
+			#	pmove = pathAgent.decide(g, g.current_player)
+			#	g.make_move(pmove.function, pmove.args)
+			#except:
+			rmove = randomAgent.decide(g, g.current_player)
 			g.make_move(rmove.function, rmove.args)
 		pmax = -1
 		smax = -1000
@@ -44,19 +58,24 @@ class TreeNode:
 
 		if pmax == pnum:
 			return 1
+		else:
+			return 0
 
 	def propagate(self, winint):
+		if winint != None:
+			self.numerator = self.numerator + winint
 		self.denominator = self.denominator + 1
-		self.numerator = self.numerator + winint
+		#print winint
 		if self.parent != None:
 			self.parent.propagate(winint)
 
 
 	def getUCTSelect(self):
-		return (numerator / denominator) + sqrt(2) * sqrt(log(self.parent.denominator) / denominator)
+		return (self.numerator / self.denominator) + math.sqrt(2) * math.sqrt(math.log(self.parent.denominator) / self.denominator)
 
-	def __int__(self):
-		return getUCTSelect()
+	def __float__(self):
+		return self.getUCTSelect()
+
 
 
 
@@ -70,7 +89,52 @@ class MCTSAgent():
 		#selection
 		pmoves = g.get_possible_moves(pnum)
 		for move in pmoves:
-			root.expand(move)
+			root.expand2(move)
+		start = time.time()
+
+		while time.time() - start < 100:
+			#selection
+			cNode = []
+			maxuct = -10000
+			for node in root.children:
+				if float(node) > maxuct:
+					cNode = [node]
+					maxuct = float(node)
+				elif float(node) == maxuct:
+					cNode.append(node)
+
+			explore = random.choice(cNode)
+
+			while True:
+				if len(explore.children) == 0:
+					explore.expand()
+					break
+				else:
+					cNode = [explore]
+					maxuct = float(explore)
+					for node in explore.children:
+						if float(node) > maxuct:
+							cNode = [node]
+							maxuct = float(node)
+						elif float(node) == maxuct:
+							cNode.append(node)
+					expexplore = random.choice(cNode)
+					if expexplore == explore:
+						explore.expand()
+						break
+					else:
+						explore = expexplore
+
+		cNode = []
+		maxuct = -10000
+		for node in root.children:
+			if float(node) > maxuct:
+				cNode = [node]
+				maxuct = float(node)
+			elif float(node) == maxuct:
+				cNode.append(node)
+
+		return random.choice(cNode).move
 
 		
 

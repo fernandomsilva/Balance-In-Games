@@ -24,6 +24,10 @@ class Agent:
 
 	def decide(self, game, pnum):
 		pmoves = game.get_possible_moves(pnum)
+		if len(pmoves) == 0:
+			f1 = open('disaster' + '.go', 'wb')
+			pickle.dump(game, f1)
+			f1.close()
 		return random.choice(pmoves)
 
 
@@ -626,6 +630,7 @@ class TAStarAgent:
 		i = 0
 		while True:
 			i = i + 1
+			#print i
 			#print str(i) + ", " + str(prioq.qsize())
 			miniprioq = Queue.PriorityQueue()
 			ATuple = prioq.get()
