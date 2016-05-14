@@ -42,34 +42,30 @@ class TreeNode:
 		pathAgent = PathAgent()
 		randomAgent = Agent()
 		count = 0
-		try:
-			while g.game_over != True:
-				#try:
-				#	pmove = pathAgent.decide(g, g.current_player)
-				#	g.make_move(pmove.function, pmove.args)
-				#except:
-				rmove = randomAgent.decide(g, g.current_player)
-				g.make_move(rmove.function, rmove.args)
-			pmax = -1
-			smax = -1000
-			for player in g.players:
-				if player.points > smax:
-					pmax = g.players.index(player)
-					smax = player.points
+		while g.game_over != True:
+			#try:
+			#	pmove = pathAgent.decide(g, g.current_player)
+			#	g.make_move(pmove.function, pmove.args)
+			#except:
+			rmove = randomAgent.decide(g, g.current_player)
+			g.make_move(rmove.function, rmove.args)
+		pmax = -1
+		smax = -1000
+		for player in g.players:
+			if player.points > smax:
+				pmax = g.players.index(player)
+				smax = player.points
 
-			if pmax == pnum:
-				return 1
-			else:
-				return 0
-		except:
-			f1 = open('disaster' + '.go', 'wb')
-			pickle.dump(g, f1)
-			f1.close()
+		if pmax == pnum:
+			return 1
+		else:
+			return 0
 
 	def propagate(self, winint):
+		if winint != None:
+			self.numerator = self.numerator + winint
 		self.denominator = self.denominator + 1
 		#print winint
-		self.numerator = self.numerator + winint
 		if self.parent != None:
 			self.parent.propagate(winint)
 
