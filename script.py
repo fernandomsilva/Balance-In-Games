@@ -26,13 +26,13 @@ def run(i):
 #t = run(0)
 
 #game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
-game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0),Player([], 45, 0),Player([], 45, 0)], 0)
+game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0)], 0)
 game_object.setup()
 
 #gh = GameHandler(game_object, [AStarAgent(), TrollStarAgent(), EAStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
 #gh.play(0)
 #gh = GameHandler(game_object, [PathAgent(), PathAgent()], 'data/testdata')
-gh = GameHandler(game_object, [PathAgent(), PathAgent(), PathAgent(), PathAgent(), PathAgent()], 'data/testdata')
+gh = GameHandler(game_object, [PathAgent(), TAStarAgent()], 'data/testdata')
 gh.play(0)
 
 #pa = PathAgent()

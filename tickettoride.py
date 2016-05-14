@@ -202,7 +202,8 @@ class Board:
 		self.graph = board_graph
 
 	def copy(self):
-		b = Board(copy.deepcopy(self.graph))
+		#b = Board(copy.deepcopy(self.graph))
+		b = Board(nx.MultiGraph(self.graph))
 		return b
 
 	#returns a route (edge) of a specific color that connect two cities
