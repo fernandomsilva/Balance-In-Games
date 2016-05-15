@@ -5,35 +5,37 @@ from Visualization import *
 import multiprocessing as mp
 from PathAgent import *
 from AStarSeries import *
+from mcts2 import *
 
 def run(i):
-	game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
+	game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0), Player([], 45, 0)], 0)
 	game_object.setup()
 
-	gh = GameHandler(game_object, [AStarAgent(), RAStarAgent(), TrollStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
+	gh = GameHandler(game_object, [MCTSAgent(), TAStarAgent()], 'data3/AvM')
 
-	#gh.play(i)
+	gh.play(i, True)
 	return game_object
 
 #if __name__ == '__main__':
-#	pool = mp.Pool()
-#
-#	anything = range(0, 20)
-#
+#	pool = mp.Pool(20)
+
+#	anything = range(0, 10000)
+
 #	pool.map(run, anything)
-#
+
 #	pool.terminate()
-#t = run(0)
+#i = 0
+#while(True):
+#	run(i)
+#	i = i + 1
+t = run(0)
 
 #game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
-game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0)], 0)
-game_object.setup()
+
 
 #gh = GameHandler(game_object, [AStarAgent(), TrollStarAgent(), EAStarAgent(), PAStarAgent(), Agent()], 'data/testdata')
 #gh.play(0)
 #gh = GameHandler(game_object, [PathAgent(), PathAgent()], 'data/testdata')
-gh = GameHandler(game_object, [PathAgent(), TAStarAgent()], 'data/testdata')
-gh.play(0)
 
 #pa = PathAgent()
 #print pa.decide(game_object, 0)

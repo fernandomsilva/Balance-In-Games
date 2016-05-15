@@ -363,8 +363,9 @@ class Game:
 	#adds a new face up train cards
 	#makes sure to never have 3 wild cards face up at the same time (rulebook)
 	def addFaceUpTrainCard(self):
-		if len(self.train_deck.deck) == 0:
-			self.train_deck.reshuffle()
+		#print self.train_deck.deck
+		#print self.train_deck.discard_pile
+		
 		if len(self.train_deck.deck) > 0:
 			card = self.draw_card(self.train_deck)
 
@@ -375,12 +376,17 @@ class Game:
 
 				if 'wild' in card_count:
 					if card_count['wild'] >= 3:
-						self.train_deck.discard(self.train_cards_face_up)
-						self.train_cards_face_up = []
-
-						x = 5 if len(self.train_deck.deck) + len(self.train_deck.discard_pile) >= 5 else len(self.train_deck.deck) + len(self.train_deck.discard_pile)
-						for i in range(0, x):
-							self.addFaceUpTrainCard()
+						x = len(self.train_deck.deck) + len(self.train_deck.discard_pile)
+						if x > 5:
+							self.train_deck.discard(self.train_cards_face_up)
+							self.train_cards_face_up = []
+							x = 5
+							for i in range(0, x):
+								try:
+									self.addFaceUpTrainCard()
+								except:
+									print self.train_deck.deck
+									print self.train_deck.discard_pile
 
 	#passes the turn to the next player
 	def next_players_turn(self):
@@ -544,6 +550,8 @@ class Game:
 	#card => string of the card to draw. If value is 'top', draws a card from the top of the deck
 	#to draw from the face up cards, just pass the string of the color of the card to draw as the parameter
 	def drawTrainCard(self, card):
+		if len(self.train_deck.deck) == 0:
+			self.train_deck.reshuffle()
 		if card == 'wild' and card in self.train_cards_face_up and self.players[self.current_player].drawing_train_cards == False:
 			self.players[self.current_player].hand.append('wild')
 			self.train_cards_face_up.remove('wild')

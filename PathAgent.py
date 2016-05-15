@@ -2,6 +2,7 @@ import networkx as nx
 import Queue
 import collections
 import random
+import pickle
 
 class PathAgent:
 	def __init__(self):
@@ -10,10 +11,16 @@ class PathAgent:
 	def decide(self, game, pnum):
 		possible_moves = game.get_possible_moves(pnum)
 		
+		if len(possible_moves) == 0:
+			f1 = open('disaster' + '.go', 'wb')
+			pickle.dump(game, f1)
+			f1.close()
+			return None
+
 		if possible_moves[0].function == 'chooseDestinationCards':
 			for m in possible_moves:
 				if len(m.args[1]) == 3:
-					print 'd'
+					#print 'd'
 					return m
 	
 		p_queue = Queue.PriorityQueue()
@@ -114,17 +121,17 @@ class PathAgent:
 				#print "if"
 				return_move = None
 				for m in moves_available:
-					print m.function
-					print m.args
+					#print m.function
+					#print m.args
 					if m.args[2] == max_color:
 						return_move = m
 						break
 				
 				#print "return_move: " + return_move.function + " : " + str(return_move.args)
-				print max_color
-				print return_move.function
-				print return_move.args
-				print 'a'
+				#print max_color
+				#print return_move.function
+				#print return_move.args
+				#print 'a'
 				return return_move
 
 		if len(game.train_deck.deck) > 0:
@@ -132,15 +139,15 @@ class PathAgent:
 			for m in possible_moves:
 
 				if m.function == 'drawTrainCard':
-					print m.function
-					print m.args
+					#print m.function
+					#print m.args
 					if m.args == first_max_color:
 						return m
 					elif m.args == 'top':
 						top_draw = m
-			print 'b'
-			print top_draw.function
-			print top_draw.args
+			#print 'b'
+			#print top_draw.function
+			#print top_draw.args
 			return top_draw
 
 #			else:

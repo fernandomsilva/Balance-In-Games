@@ -3,6 +3,7 @@ import Queue
 import collections
 import random
 import time
+import pickle
 
 class CopyAgent:
 	def __init__(self):
@@ -28,6 +29,7 @@ class Agent:
 			f1 = open('disaster' + '.go', 'wb')
 			pickle.dump(game, f1)
 			f1.close()
+			return None
 		return random.choice(pmoves)
 
 
