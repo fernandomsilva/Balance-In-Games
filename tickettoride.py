@@ -130,6 +130,7 @@ class Player:
 		self.hand_destination_cards = []
 		self.number_of_trains = number_of_trains
 		self.points = points
+		self.graph = nx.Graph()
 		self.choosing_destination_cards = False
 		self.drawing_train_cards = False
 
@@ -139,6 +140,7 @@ class Player:
 		p.hand_destination_cards = self.hand_destination_cards[:]		
 		p.choosing_destination_cards = self.choosing_destination_cards
 		p.drawing_train_cards = self.drawing_train_cards
+		p.graph = nx.Graph(self.graph)
 		return p
 
 	def print_destination_cards(self):
@@ -202,7 +204,8 @@ class Board:
 		self.graph = board_graph
 
 	def copy(self):
-		b = Board(copy.deepcopy(self.graph))
+		#b = Board(copy.deepcopy(self.graph))
+		b = Board(nx.MultiGraph(self.graph))
 		return b
 
 	#returns a route (edge) of a specific color that connect two cities
@@ -500,6 +503,8 @@ class Game:
 				self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['weight']
 				edge['owner'] = self.current_player
 				self.players[self.current_player].points = self.players[self.current_player].points + self.point_table[edge['weight']]
+
+				self.players[self.current_player].graph.add_edge(city1, city2, weight=edge['weight'])
 			else:
 				return False
 
@@ -610,15 +615,16 @@ class Game:
 	#returns a graph of all routes (edges) claimed by a player
 	#player => index of the player
 	def player_graph(self, player):
-		G = nx.Graph()
-		
-		for node1 in self.board.graph:
-			for node2 in self.board.graph[node1]:
-				for edge in self.board.graph[node1][node2]:
-					if self.board.graph[node1][node2][edge]['owner'] == player:
-						G.add_edge(node1, node2, weight=self.board.graph[node1][node2][edge]['weight'])
-		
-		return G
+		#G = nx.Graph()
+		#
+		#for node1 in self.board.graph:
+		#	for node2 in self.board.graph[node1]:
+		#		for edge in self.board.graph[node1][node2]:
+		#			if self.board.graph[node1][node2][edge]['owner'] == player:
+		#				G.add_edge(node1, node2, weight=self.board.graph[node1][node2][edge]['weight'])
+		#
+		#return G
+		return self.players[player].graph
 
 	def player_plus_free_graph(self, player):
 		G = nx.Graph()

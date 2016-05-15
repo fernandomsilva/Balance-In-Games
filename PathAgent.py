@@ -1,42 +1,19 @@
 import networkx as nx
 import Queue
 import collections
-import pickle
-from AStarSeries import *
+import random
 
 class PathAgent:
 	def __init__(self):
 		pass
 
-
 	def decide(self, game, pnum):
-		move = self.pathdecide(game, pnum)
-		if(move == None):
-			try:
-				randomize = Agent()
-				print "DEFAULTING"
-				return randomize.decide(game, pnum)
-			except:
-				return None
-				pass
-		#print move.function + ", " + str(move.args)
-		#print game.train_cards_face_up
-		#print game.train_deck.deck
-		#print game.destination_deck.deck
-		#print len(game.train_deck.deck) > 0
- 		return move
-
-	def pathdecide(self, game, pnum):
 		possible_moves = game.get_possible_moves(pnum)
-		if len(possible_moves) == 0:
-			return None
-
-		#for m in possible_moves:
-			#print m.function + ", " + str(m.args)
 		
 		if possible_moves[0].function == 'chooseDestinationCards':
 			for m in possible_moves:
 				if len(m.args[1]) == 3:
+					print 'd'
 					return m
 	
 		p_queue = Queue.PriorityQueue()
@@ -88,19 +65,22 @@ class PathAgent:
 		for path in paths_to_take:
 			p_queue.put(path)
 
-		#while not p_queue.empty():
-		if not p_queue.empty():
+		#if not p_queue.empty():
+		first_max_color = None
+		while not p_queue.empty():
 			move = p_queue.get()
 			#print move
 			color = []
 			try:
-				edges = game.board.graph[move[1]][move[2]]
+				#edges = game.board.graph[move[1]][move[2]]
+				edges = free_connections_graph[move[1]][move[2]]
 				for key in edges:
-					color.append(game.board.graph[move[1]][move[2]][key]['color'])
+					color.append(free_connections_graph[move[1]][move[2]][key]['color'])
 			except:
-				edges = game.board.graph[move[2]][move[1]]
+				#edges = game.board.graph[move[2]][move[1]]
+				edges = free_connections_graph[move[2]][move[1]]
 				for key in edges:
-					color.append(game.board.graph[move[2]][move[1]][key]['color'])
+					color.append(free_connections_graph[move[2]][move[1]][key]['color'])
 
 			
 			if "GRAY" in color:
@@ -121,6 +101,9 @@ class PathAgent:
 			
 			#print "1: " + max_color
 			
+			if first_max_color == None:
+				first_max_color = max_color
+
 			moves_available = []
 			for m in possible_moves:
 				if m.function == 'claimRoute':
@@ -131,32 +114,61 @@ class PathAgent:
 				#print "if"
 				return_move = None
 				for m in moves_available:
-					#print m.function
-					#print m.args
+					print m.function
+					print m.args
 					if m.args[2] == max_color:
 						return_move = m
 						break
 				
 				#print "return_move: " + return_move.function + " : " + str(return_move.args)
+				print max_color
+				print return_move.function
+				print return_move.args
+				print 'a'
 				return return_move
-			
-			else:
-				#print "else"
-				top_draw = None
-				for m in possible_moves:
-					if m.function == 'drawTrainCard':
-						#print m.args
-						if m.args == max_color:
-							return m
-						elif m.args == 'top':
-							top_draw = m
-				
-				return top_draw
+
+		if len(game.train_deck.deck) > 0:
+			top_draw = None
+			for m in possible_moves:
+
+				if m.function == 'drawTrainCard':
+					print m.function
+					print m.args
+					if m.args == first_max_color:
+						return m
+					elif m.args == 'top':
+						top_draw = m
+			print 'b'
+			print top_draw.function
+			print top_draw.args
+			return top_draw
+
+#			else:
+#				#print "else"
+#				top_draw = None
+#				for m in possible_moves:
+#
+#					if m.function == 'drawTrainCard':
+#						#print m.args
+#						if m.args == max_color:
+#							return m
+#						elif m.args == 'top':
+#							top_draw = m
+#				return top_draw
 			
 		for m in possible_moves:
-			if m.function == 'drawTrainCard' and m.args == 'top':
-				return m
-				
+			if len(game.train_deck.deck) > 0:
+				if m.function == 'drawTrainCard' and m.args == 'top':
+					return m
+			else:
+				if m.function == 'drawTrainCard' and m.args == 'wild':
+					return m
+
+		if len(possible_moves) > 0:
+			return random.choice(possible_moves)
+		
+		#print len(game.train_deck.deck)
+		#print len(game.train_deck.discard_pile)
 		#for (city1, city2) in paths_to_take:
 		#	try:
 		#		p_queue.
@@ -201,13 +213,14 @@ class PathAgent:
 				if node2 not in visited_nodes:
 					locked = False
 					for edge in graph[node1][node2]:
-						if number_of_players < 3:
+						if number_of_players < 4:
 							if graph[node1][node2][edge]['owner'] != -1:
 								locked = True
 
 					if not locked:
 						for edge in graph[node1][node2]:
-							G.add_edge(node1, node2, weight=graph[node1][node2][edge]['weight'], color=graph[node1][node2][edge]['color'])
+							if graph[node1][node2][edge]['owner'] == -1:
+								G.add_edge(node1, node2, weight=graph[node1][node2][edge]['weight'], color=graph[node1][node2][edge]['color'])
 
 			visited_nodes.append(node1)
 		
