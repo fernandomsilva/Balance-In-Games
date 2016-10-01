@@ -13,7 +13,8 @@ def run(i):
 
 	gh = GameHandler(game_object, [MCTSAgent(), TAStarAgent()], 'data3/AvM')
 
-	gh.play(i, True)
+	#gh.play(i, True)
+	gh.play(i)
 	return game_object
 
 #if __name__ == '__main__':

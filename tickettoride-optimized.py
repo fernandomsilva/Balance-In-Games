@@ -91,11 +91,18 @@ class GameHandler:
 #number_of_wildcards => an integer that defines the number of wild cards in the deck
 #default values (following the rulebook) should be 12 color cards and 14 wilds
 def make_train_deck(number_of_color_cards, number_of_wildcards):
-	result = []
-	cards = ["red", "orange", "blue", "pink", "white", "yellow", "black", "green"]
-	result = [card for card in cards for x in range(0, number_of_color_cards)]
-	result.extend(["wild" for x in range(0, number_of_wildcards)])
-	return result
+	cards = {"red": number_of_color_cards, "orange": number_of_color_cards, "blue": number_of_color_cards, "pink": number_of_color_cards, "white": number_of_color_cards, "yellow": number_of_color_cards, "black": number_of_color_cards, "green": number_of_color_cards, "wild": number_of_wildcards}
+	return cards
+
+def randomCard(cards):
+	k = cards.keys()
+	total = 0
+	temp = []
+	
+	for x in k:
+		total += k[x]
+		temp.append(total)
+		
 
 #returns a dict that relates the number of trains on a route to how many points that is worth
 # 1 train route is worth 1 point
@@ -164,7 +171,7 @@ class Move:
 class CardManager:
 	def __init__(self, cardlist):
 		self.deck = cardlist
-		self.discard_pile = []
+		self.discard_pile = {}
 
 	def __len__(self):
 		return len(self.deck)
@@ -172,8 +179,8 @@ class CardManager:
 	def copy(self):
 		#c = CardManager(copy.copy(self.deck))
 		#c.discard_pile = copy.copy(self.discard_pile)
-		c = CardManager(self.deck[:])
-		c.discard_pile = self.discard_pile[:]
+		c = CardManager(self.deck.copy())
+		c.discard_pile = self.discard_pile.copy()
 		return c
 
 	#returns a randomly picked card from the list (deck)
