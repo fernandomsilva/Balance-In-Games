@@ -26,3 +26,10 @@ def loaddestinationdeckfromfile(filename):
 		line = file.readline()
 
 	return deck
+
+def destinationdeckdict(dest_list):
+	result = {}
+	for dest in dest_list:
+		result[dest] = 1
+	
+	return result
