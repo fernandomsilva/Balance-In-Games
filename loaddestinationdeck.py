@@ -27,9 +27,13 @@ def loaddestinationdeckfromfile(filename):
 
 	return deck
 
-def destinationdeckdict(dest_list):
+def destinationdeckdict(dest_list, board="usa"):
 	result = {}
+
 	for dest in dest_list:
 		result[dest] = 1
 	
+	if board == "europe":
+		result['long_routes'] = dest_list[:6]
+
 	return result

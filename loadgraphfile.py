@@ -15,18 +15,36 @@ def loadgraphfromfile(filename):
 
 	line = file.readline()
 	while len(line.strip()) > 0:
-		index = re.search('\d', line).start()
-		index_space = line[index+2:].index(' ')
-		color = line[index+2:index+2+index_space]
+		num = re.search('[+-]?\d+(?:\.\d+)?', line).group(0)
+		index = re.search('[+-]?\d+(?:\.\d+)?', line).start()
+		index_after_num = re.search('[+-]?\d+(?:\.\d+)?', line).start() + len(num) - 1
+		index_space = line[index_after_num+2:].index(' ')
+		color = line[index_after_num+2:index_after_num+2+index_space]
 		#print line[index+2:index+2+index_space]]
 		node1 = line[:index].strip() if (line[:index].strip())[-1] != ' ' else line[:index-1].strip()
-		node2 = line[index+2+index_space:].strip() if (line[index+2+index_space:].strip())[-1] != ' ' else (line[index+2+index_space:].strip())[:-1]
-		G.add_edge(node1, node2, weight=int(line[index]), color=color)
+		node2 = line[index_after_num+2+index_space:].strip() if (line[index_after_num+2+index_space:].strip())[-1] != ' ' else (line[index_after_num+2+index_space:].strip())[:-1]
+		G.add_edge(node1, node2, weight=float(num), color=color)
 		line = file.readline()
 
 	for e in G.edges():
 		for me in G[e[0]][e[1]]:
 			G[e[0]][e[1]][me]['owner'] = -1
+			num = G[e[0]][e[1]][me]['weight']
+
+			if num < 0:
+				G[e[0]][e[1]][me]['underground'] = True
+			else:
+				G[e[0]][e[1]][me]['underground'] = False
+			if (num % 1) > 0.0:
+				G[e[0]][e[1]][me]['ferries'] = int((num % 1) * 10.0)
+			else:
+				G[e[0]][e[1]][me]['ferries'] = 0
+
+	for e in G.edges():
+		for me in G[e[0]][e[1]]:
+			G[e[0]][e[1]][me]['weight'] = int(abs(num))
+
+
 		#e['owner'] = -1
 
 	#print G.edges()

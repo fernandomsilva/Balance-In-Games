@@ -117,7 +117,11 @@ def emptyCardDict():
 # 2 train route is worth 2 points
 # 3 train route is worth 4 points
 def point_table():
-	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
+	#if board == "europe":
+	#	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21}
+
+	#return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
+	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21}
 
 def comparePlayerKey(p1):
 	return p1.points
@@ -308,7 +312,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -321,7 +325,11 @@ class Game:
 		self.last_turn_player = -1
 		self.moves_reference = {}
 		self.game_over = False
-	
+		self.destination_deck_draw_rules = variants[0:4]
+		self.longest_route_variant = variants[4]
+		self.globetrotter_variant = variants[5]
+		self.europe_variant = variants[6]
+
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
 
@@ -336,7 +344,7 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player)
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
@@ -349,11 +357,21 @@ class Game:
 	#remember, the first move of every player should be to choose the destination cards they want to keep
 	def setup(self):
 		self.set_moves_reference()
-	
+
+		if self.europe_variant:
+			for i in range(0, self.number_of_players):
+				if "destination" not in self.players[i].hand:
+					self.players[i].hand["destination"] = []
+				card = random.choice(self.destination_deck.deck['long_routes'])
+				self.players[i].hand["destination"].append(card)
+				self.destination_deck.deck['long_routes'].remove(card)
+
+			self.destination_deck.deck['long_routes'] = 0
+
 		for i in range (0, self.number_of_players):
 			for j in range(0, 4):
 				self.players[i].hand[self.draw_card(self.train_deck)] += 1
-			for j in range(0, 3):
+			for j in range(0, self.destination_deck_draw_rules[0]):
 				if "destination" not in self.players[i].hand:
 					self.players[i].hand["destination"] = []
 				self.players[i].hand["destination"].append(self.draw_card(self.destination_deck))
@@ -441,7 +459,7 @@ class Game:
 	#cards => list of destination cards (objects of class DestinationCard) to keep. All the other destination cards not in the list that the player currently has will be removed from the game
 	#PS: Destination cards get added to the players hand of train cards until he decides which ones to keep
 	def choose_destination_cards(self, player, cards):
-		min_num_cards = 2 if self.players_choosing_destination_cards else 1
+		min_num_cards = self.destination_deck_draw_rules[1] if self.players_choosing_destination_cards else self.destination_deck_draw_rules[3]
 
 		#print "cards:" + str(cards)
 		
@@ -465,7 +483,7 @@ class Game:
 			#print (self.players[player].hand)
 			#raw_input('wait')
 
-		if min_num_cards == 1 and len(cards) >= min_num_cards:
+		if min_num_cards == self.destination_deck_draw_rules[3] and len(cards) >= min_num_cards:
 			self.next_players_turn()
 
 	#tests whether the player has the cards needed to claim a route
@@ -475,7 +493,7 @@ class Game:
 	#returns False if the player doesn't have the cards needed
 	#returns the list of cards he needs to use to claim the route
 	#if the player doesn't have enough of the color, it will try to complete the requirements with wild cards
-	def checkPlayerHandRequirements(self, player_index, number_of_cards, color):
+	def checkPlayerHandRequirements(self, player_index, number_of_cards, color, ferries):
 		if sum([x for x in self.players[player_index].hand.itervalues() if isinstance(x, int)]) < number_of_cards:
 			return False
 
@@ -491,14 +509,22 @@ class Game:
 		if color not in card_count and color != 'wild':
 			color = 'wild'
 
+		if ferries > 0 and card_count['wild'] < ferries:
+			return False
 		if total < number_of_cards:
 			return False
 
 		cards_to_use = []
-		if color in card_count:
-			x = number_of_cards if card_count[color] >= number_of_cards else card_count[color]
-			for i in range(0, x):
-				cards_to_use.append(color)
+		if ferries > 0:
+			for i in range(0, ferries):
+				cards_to_use.append('wild')
+			number_of_cards = number_of_cards - ferries
+
+		if len(cards_to_use) < number_of_cards:
+			if color in card_count:
+				x = number_of_cards if card_count[color] >= number_of_cards else card_count[color]
+				for i in range(0, x):
+					cards_to_use.append(color)
 
 		if len(cards_to_use) < number_of_cards:
 			x = number_of_cards - len(cards_to_use)
@@ -523,7 +549,7 @@ class Game:
 
 		if edge != None and edge['owner'] == -1:
 			route_color = edge['color'] if edge['color'] != 'GRAY' else color
-			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color)
+			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color, edge['ferries'])
 
 			if cards_needed and self.players[self.current_player].number_of_trains >= edge['weight']:
 				self.discard_cards(self.current_player, cards_needed)
@@ -554,7 +580,7 @@ class Game:
 		if sum(self.destination_deck.deck.itervalues()) == 0:
 			return False
 
-		x = 3 if sum(self.destination_deck.deck.itervalues()) >= 3 else sum(self.destination_deck.deck.itervalues())
+		x = self.destination_deck_draw_rules[2] if sum(self.destination_deck.deck.itervalues()) >= self.destination_deck_draw_rules[2] else sum(self.destination_deck.deck.itervalues)
 		if 'destination' not in self.players[self.current_player].hand:
 			self.players[self.current_player].hand['destination'] = []
 		for i in range(0, x):
@@ -672,16 +698,21 @@ class Game:
 	def calculatePoints(self):
 		longest_route_value = None
 		longest_route_player = []
+		max_destination_cards_completed = 0
+		globetrotter_player = []
 	
 		for player in self.players:
 			#print "This player has " + str(player.points) + " points from building routes"
 			player_graph = self.player_graph(self.players.index(player))
 		
+			number_of_destinations_completed = 0
+
 			for destination in player.hand_destination_cards:
 				try:
 					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
 						#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
 						player.points = player.points + destination.points
+						number_of_destinations_completed += 1
 					else:
 						#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 						player.points = player.points - destination.points
@@ -689,21 +720,32 @@ class Game:
 					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 					player.points = player.points - destination.points
 
-			temparr = [self.findMaxWeightSumForNode(player_graph, v, []) for v in player_graph.nodes()]
-			temp = 0
-			if len(temparr) > 0:
-				temp = max(temparr)
-			
-			if longest_route_value == None or temp >= longest_route_value:
-				if temp > longest_route_value:
-					longest_route_player = [self.players.index(player)]
-				else:
-					longest_route_player.append(self.players.index(player))
+			if self.globetrotter_variant:
+				if number_of_destinations_completed >= max_destination_cards_completed:
+					max_destination_cards_completed = number_of_destinations_completed
+					globetrotter_player.append(self.players.index(player))
 
-				longest_route_value = temp
-		
-		for player in longest_route_player:
-			self.players[player].points = self.players[player].points + 10
+			if self.longest_route_variant:
+				temparr = [self.findMaxWeightSumForNode(player_graph, v, []) for v in player_graph.nodes()]
+				temp = 0
+				if len(temparr) > 0:
+					temp = max(temparr)
+				
+				if longest_route_value == None or temp >= longest_route_value:
+					if temp > longest_route_value:
+						longest_route_player = [self.players.index(player)]
+					else:
+						longest_route_player.append(self.players.index(player))
+
+					longest_route_value = temp
+
+		if self.globetrotter_variant:
+			for player in globetrotter_player:
+				self.players[player].points = self.players[player].points + 15
+
+		if self.longest_route_variant:
+			for player in longest_route_player:
+				self.players[player].points = self.players[player].points + 10
 
 	def returnCurrentPoints(self, player):
             player_graph = self.player_graph(self.players.index(player))
@@ -735,14 +777,14 @@ class Game:
 		pmoves = []
 		if self.players_choosing_destination_cards == True:
 			dest_card_set = self.list_pending_destination_cards(player_index)
-			for x in range(2, len(dest_card_set) + 1):
+			for x in range(self.destination_deck_draw_rules[1], len(dest_card_set) + 1):
 				comb = itertools.combinations(dest_card_set, x)
 				for cardset in comb:
 					pmoves.append(Move('chooseDestinationCards', [player_index, list(cardset)]))
 					#pmoves.append(Move(self.move_choose_destination_cards, [player_index, list(cardset)]))
 		elif self.players[player_index].choosing_destination_cards == True:
 			dest_card_set = self.list_pending_destination_cards(player_index)
-			for x in range(1, len(dest_card_set) + 1):
+			for x in range(self.destination_deck_draw_rules[3], len(dest_card_set) + 1):
 				comb = itertools.combinations(dest_card_set, x)
 				for cardset in comb:
 					pmoves.append(Move('chooseDestinationCards', [player_index, list(cardset)]))
@@ -767,7 +809,7 @@ class Game:
 						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
 
 						if edge != None:
-							if self.checkPlayerHandRequirements(player_index, edge['weight'], color) != False:
+							if self.checkPlayerHandRequirements(player_index, edge['weight'], color, edge['ferries']) != False:
 								if self.players[player_index].number_of_trains >= edge['weight']:
 									pmoves.append(Move('claimRoute', [city1, city2, color]))
 								#pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))

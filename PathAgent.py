@@ -19,7 +19,8 @@ class PathAgent:
 
 		if possible_moves[0].function == 'chooseDestinationCards':
 			for m in possible_moves:
-				if len(m.args[1]) == 3:
+				#if len(m.args[1]) == 3:
+				if len(m.args[1]) == game.destination_deck_draw_rules[0]:
 					#print 'd'
 					return m
 	
