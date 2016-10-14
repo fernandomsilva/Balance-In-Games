@@ -549,7 +549,16 @@ class Game:
 
 		if edge != None and edge['owner'] == -1:
 			route_color = edge['color'] if edge['color'] != 'GRAY' else color
-			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color, edge['ferries'])
+			
+			extra_weight = 0
+			if edge['underground']:
+				for i in range(0, 2):
+					card = self.draw_card(self.train_deck)
+					if card.lower() == route_color.lower():
+						extra_weight = extra_weight + 1
+					self.train_deck.discard(card)
+
+			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'] + extra_weight, route_color, edge['ferries'])
 
 			if cards_needed and self.players[self.current_player].number_of_trains >= edge['weight']:
 				self.discard_cards(self.current_player, cards_needed)
