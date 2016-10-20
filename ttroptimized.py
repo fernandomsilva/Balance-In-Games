@@ -554,7 +554,7 @@ class Game:
 			if edge['underground']:
 				for i in range(0, 2):
 					card = self.draw_card(self.train_deck)
-					if card.lower() == route_color.lower():
+					if card.lower() == route_color.lower() or card.lower() == "wild":
 						extra_weight = extra_weight + 1
 					self.train_deck.discard(card)
 
