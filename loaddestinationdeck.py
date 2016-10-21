@@ -11,6 +11,14 @@ class DestinationCard:
 	def __str__(self):
 		return str(self.destinations) + " " + str(self.points)
 
+class DestinationCountryCard(DestinationCard):
+	def setType(self, ctype):
+		self.type = ctype
+
+#class DestinationCityCountryCard(DestinationCard):
+#	def setType():
+#		self.type = 'city'
+
 def loaddestinationdeckfromfile(filename):
 	file = open(filename, 'r')
 
@@ -27,6 +35,79 @@ def loaddestinationdeckfromfile(filename):
 
 	return deck
 
+def loadcountrydestinationdeck(filename, ctype):
+	file = open(filename, 'r')
+
+	deck = []
+
+	line = file.readline()
+	while len(line.strip()) > 0:
+		index = re.search('\d', line)
+
+		dest1 = line[:index.start()-1]
+		dests2 = []
+		points = []
+
+		while index:
+			index_space = line[index.start():].index(' ')
+			#index_space2 = line[index_space:].index(' ')
+			temp_index = re.search('\d', line[index.start()+index_space:])
+
+			points.append(int(line[index.start():index.start()+index_space]))
+
+			if temp_index:
+				temp_abs_index = temp_index.start() + index.start() + index_space
+				dests2.append(line[index.start()+index_space+1:temp_abs_index-1].strip())
+			else:
+				dests2.append(line[index.start()+index_space+1:].strip())
+
+			line = line[temp_abs_index:]
+			index = re.search('\d', line)
+
+		obj = DestinationCountryCard(dest1, dests2, points)
+		obj.setType(ctype)
+		deck.append(obj)
+
+		line = file.readline()
+
+	return deck
+
+#def loadcitycountrydestinationdeck(filename):
+#	file = open(filename, 'r')
+#
+#	deck = []
+#
+#	line = file.readline()
+#	while len(line.strip()) > 0:
+#		index = re.search('\d', line)
+#
+#		dest1 = line[:index.start()-1]
+#		dests2 = []
+#		points = []
+#
+#		while index:
+#			index_space = line[index.start():].index(' ')
+#			temp_index = re.search('\d', line[index.start()+index_space:])
+#
+#			points.append(int(line[index.start():index.start()+index_space]))
+#
+#			if temp_index:
+#				temp_abs_index = temp_index.start() + index.start() + index_space
+#				dests2.append(line[index.start()+index_space+1:temp_abs_index-1].strip())
+#			else:
+#				dests2.append(line[index.start()+index_space+1:].strip())
+#
+#			line = line[temp_abs_index:]
+#			index = re.search('\d', line)
+#
+#		obj = DestinationCityCountryCard(dest1, dests2, points)
+#		obj.setType()
+#		deck.append(obj)
+#
+#		line = file.readline()
+#
+#	return deck
+
 def destinationdeckdict(dest_list, board="usa"):
 	result = {}
 
@@ -37,3 +118,10 @@ def destinationdeckdict(dest_list, board="usa"):
 		result['long_routes'] = dest_list[:6]
 
 	return result
+
+def loadswitzerlanddestinationdeck(dest_filename, country_country_dest_filename, city_country_dest_filename):
+	dest_deck = loaddestinationdeckfromfile(dest_filename)
+	country_deck = loadcountrydestinationdeck(country_country_dest_filename, 'country')
+	city_deck = loadcountrydestinationdeck(city_country_dest_filename, 'city')
+
+	return destinationdeckdict(dest_deck + country_deck + city_deck)

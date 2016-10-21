@@ -137,6 +137,10 @@ class DestinationCard:
 	def __str__(self):
 		return str(self.destinations) + " " + str(self.points)
 
+class DestinationCountryCard(DestinationCard):
+	def setType(self, ctype):
+		self.type = ctype
+
 #class to encapsulate the player
 #hand => list of train cards (strings) in the player's hand
 #number_of_trains => integer of how many trains the player has left (players start with 45 trains)
@@ -264,14 +268,13 @@ class Board:
 	#city1 and city2 => string of the two cities that make up the route
 	#color => the color of the route
 	#number_of_players => the number of players in the current game
-	def get_free_connection(self, city1, city2, color, number_of_players=2):
+	def get_free_connection(self, city1, city2, color, number_of_players=2, switzerland=False):
 		connections = self.get_connection(city1, city2)
 		locked = False
-		if number_of_players < 4:
+		if number_of_players < 4 or (number_of_players == 3 and switzerland):
 			for c in connections:
 				if connections[c]['owner'] != -1:
 					locked = True
-
 
 		if not locked:
 			for c in connections:
@@ -312,7 +315,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False]):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -329,6 +332,7 @@ class Game:
 		self.longest_route_variant = variants[4]
 		self.globetrotter_variant = variants[5]
 		self.europe_variant = variants[6]
+		self.switzerland_variant = variants[7]
 
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
@@ -344,7 +348,7 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant])
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
@@ -504,10 +508,11 @@ class Game:
 
 		if color in card_count:
 			total = total + card_count[color]
-		if color != 'wild' and 'wild' in card_count:
-			total = total + card_count['wild']
-		if color not in card_count and color != 'wild':
-			color = 'wild'
+		if not self.switzerland_variant:
+			if color != 'wild' and 'wild' in card_count:
+				total = total + card_count['wild']
+			if color not in card_count and color != 'wild':
+				color = 'wild'
 
 		if ferries > 0 and card_count['wild'] < ferries:
 			return False
@@ -545,10 +550,13 @@ class Game:
 	#if the route is a gray route, pass color as the color you want to use to claim that route, for example:
 	#if you want to claim a gray route with blue cards, pass 'blue' as the color
 	def claimRoute(self, city1, city2, color):
-		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
+		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
 
 		if edge != None and edge['owner'] == -1:
 			route_color = edge['color'] if edge['color'] != 'GRAY' else color
+
+			if color.lower() == 'wild' and self.switzerland_variant:
+				return False
 			
 			extra_weight = 0
 			if edge['underground']:
@@ -610,7 +618,7 @@ class Game:
 	def drawTrainCard(self, card):
 		if sum(self.train_deck.deck.itervalues()) == 0:
 			self.train_deck.reshuffle()
-		if card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
+		if (not self.switzerland_variant) and card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
 			self.players[self.current_player].hand['wild'] += 1
 			self.train_cards_face_up['wild'] -= 1
 			self.addFaceUpTrainCard()
@@ -718,16 +726,67 @@ class Game:
 
 			for destination in player.hand_destination_cards:
 				try:
-					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
-						#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
-						player.points = player.points + destination.points
-						number_of_destinations_completed += 1
-					else:
+					if destination.type != '':
+						coutrynodes = ['FRANCE1', 'FRANCE2', 'FRANCE3', 'FRANCE4', 'ITALIA1', 'ITALIA2', 'ITALIA3', 'ITALIA4', 'ITALIA5', 'OSTERREICH1', 'OSTERREICH2','OSTERREICH3', 'DEUTSCHLAND1', 'DEUTSCHLAND2', 'DEUTSCHLAND3', 'DEUTSCHLAND4', 'DEUTSCHLAND5']
+						pnodes = player_graph.nodes()
+						available_nodes = {'FRANCE': [], 'ITALIA': [], 'OSTERREICH': [], 'DEUTSCHLAND': []}
+						for node in coutrynodes:
+							if node in pnodes:
+								if 'FRANCE' in node:
+									available_nodes['FRANCE'].append(node)
+								if 'ITALIA' in node:
+									available_nodes['ITALIA'].append(node)
+								if 'DEUTSCHLAND' in node:
+									available_nodes['DEUTSCHLAND'].append(node)
+								if 'OSTERREICH' in node:
+									available_nodes['OSTERREICH'].append(node)
+
+						max_points = 0
+						if destination.type == 'city':
+							for key in available_nodes:
+								for country in available_nodes[key]:
+									if nx.has_path(player_graph, destination.destinations[0], country):
+										total = destination.points[destination.destinations[1].index(key)]
+										if total > max_points:
+											max_points = total
+										break
+								if max_points == max(destination.points):
+									break
+						elif destination.type == 'country':
+							for start in available_nodes[destination.destinations[0]]:
+								for key in available_nodes:
+									if key == destination.destinations[0]:
+										break
+	
+									for country in available_nodes[key]:
+										if nx.has_path(player_graph, start, country):
+											total = destination.points[destination.destinations[1].index(key)]
+											if total > max_points:
+												max_points = total
+											break
+									if max_points == max(destination.points):
+										break
+
+						if max_points > 0:
+							player.points = player.points + max_points
+							number_of_destinations_completed += 1
+						else:
+							player.points = player.points - min(destination.points)
+				except:
+#						try:
+#							for final_dest in destination.destinations[1]:
+#								if nx.has_path(player_graph, destination.destinations[0], )
+					try:
+						if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+							#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
+							player.points = player.points + destination.points
+							number_of_destinations_completed += 1
+						else:
+							#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+							player.points = player.points - destination.points
+					except:
 						#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 						player.points = player.points - destination.points
-				except:
-					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-					player.points = player.points - destination.points
 
 			if self.globetrotter_variant:
 				if number_of_destinations_completed >= max_destination_cards_completed:
@@ -757,15 +816,15 @@ class Game:
 				self.players[player].points = self.players[player].points + 10
 
 	def returnCurrentPoints(self, player):
-            player_graph = self.player_graph(self.players.index(player))
-            for destination in player.hand_destination_cards:
-                try:
-                    if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
-                        player.points = player.points + destination.points
-                    else:
-                        player.points = player.points - destination.points
-                except:
-                    player.points = player.points - destination.points
+		player_graph = self.player_graph(self.players.index(player))
+		for destination in player.hand_destination_cards:
+			try:
+				if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+					player.points = player.points + destination.points
+				else:
+					player.points = player.points - destination.points
+			except:
+				player.points = player.points - destination.points
 
 	#calculates the longest route of a player
 	#G => the graph from which to calculate (use a graph return by the function player_graph above)
@@ -801,8 +860,11 @@ class Game:
 		elif self.players[player_index].drawing_train_cards == True and sum(self.train_deck.deck.itervalues()) > 0:
 			pmoves.append(Move('drawTrainCard', 'top'))
 			for card in set(self.train_cards_face_up):
-				if card != 'wild' and self.train_cards_face_up[card] > 0:
+				if self.switzerland_variant and self.train_cards_face_up[card] > 0:
 					pmoves.append(Move('drawTrainCard', card))
+				else:
+					if card != 'wild' and self.train_cards_face_up[card] > 0:
+						pmoves.append(Move('drawTrainCard', card))
 				#pmoves.append(Move(self.move_drawTrainCard, card))				
 		else:
 			colors = ["RED", "ORANGE", "BLUE", "PINK", "WHITE", "YELLOW", "BLACK", "GREEN"]
@@ -815,7 +877,7 @@ class Game:
 					visited.append((city1, city2))
 
 					for color in colors:
-						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
+						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
 
 						if edge != None:
 							if self.checkPlayerHandRequirements(player_index, edge['weight'], color, edge['ferries']) != False:
@@ -889,7 +951,7 @@ class Game:
 				visited.append((city1, city2))
 
 				for color in colors:
-					edge = self.board.get_free_connection(city1, city2, color, self.number_of_players)
+					edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
 
 					if edge != None:
 						unclaimed.add((city1, city2))
