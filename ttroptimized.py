@@ -12,10 +12,10 @@ import copy_reg
 import types
 
 def _pickle_method(m):
-    if m.im_self is None:
-        return getattr, (m.im_class, m.im_func.func_name)
-    else:
-        return getattr, (m.im_self, m.im_func.func_name)
+	if m.im_self is None:
+		return getattr, (m.im_class, m.im_func.func_name)
+	else:
+		return getattr, (m.im_self, m.im_func.func_name)
 
 copy_reg.pickle(types.MethodType, _pickle_method)
 
@@ -557,24 +557,51 @@ class Game:
 
 			if color.lower() == 'wild' and self.switzerland_variant:
 				return False
-			
-			extra_weight = 0
-			if edge['underground']:
-				for i in range(0, 2):
-					card = self.draw_card(self.train_deck)
-					if card.lower() == route_color.lower() or card.lower() == "wild":
-						extra_weight = extra_weight + 1
-					self.train_deck.discard(card)
 
-			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'] + extra_weight, route_color, edge['ferries'])
+			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color, edge['ferries'])
 
 			if cards_needed and self.players[self.current_player].number_of_trains >= edge['weight']:
-				self.discard_cards(self.current_player, cards_needed)
-				self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['weight']
-				edge['owner'] = self.current_player
-				self.players[self.current_player].points = self.players[self.current_player].points + self.point_table[edge['weight']]
+				not_enough_cards = False
+			
+				if edge['underground']:
+					extra_weight = 0
+					for i in range(0, 2):
+						card = self.draw_card(self.train_deck)
+						if card.lower() == route_color.lower() or card.lower() == "wild":
+							extra_weight = extra_weight + 1
+						self.train_deck.discard(card)
+				
+					if extra_weight > 0:
+						total_player_hand = self.players[self.current_player].hand[route_color.lower()]
+						if route_color.lower() != "wild":
+							total_player_hand += self.players[self.current_player].hand["wild"]
+						
+						if len(cards_needed) + extra_weight > total_player_hand:
+							not_enough_cards = True
+						else:
+							if self.players[self.current_player].hand[route_color.lower()] >= len(cards_needed) + extra_weight:
+								for i in range(0, extra_weight):
+									cards_needed.append(route_color.lower())
+									
+								extra_weight = 0
+								
+							elif self.players[self.current_player].hand[route_color.lower()] > len(cards_needed):
+								difference = self.players[self.current_player].hand[route_color.lower()] - len(cards_needed)
+								for i in range(0, difference):
+									cards_needed.append(route_color.lower())
+								
+								extra_weight = extra_weight - difference
+							
+							for i in range (0, extra_weight):
+								cards_needed.append("wild")
+						
+				if not not_enough_cards:
+					self.discard_cards(self.current_player, cards_needed)
+					self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['weight']
+					edge['owner'] = self.current_player
+					self.players[self.current_player].points = self.players[self.current_player].points + self.point_table[edge['weight']]
 
-				self.players[self.current_player].graph.add_edge(city1, city2, weight=edge['weight'])
+					self.players[self.current_player].graph.add_edge(city1, city2, weight=edge['weight'])
 			else:
 				return False
 

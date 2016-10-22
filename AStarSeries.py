@@ -42,13 +42,37 @@ class AStarMove:
 		self.lnum = lnum
 
 	def __int__(self):
-		return (-1) * (self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore())
+		return (-1) * ((self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore()) - int(float(self.lnum)/2.0))
+		#return (-1) * (self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore())
 		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 
 	def __cmp__(self, other):
 		return cmp(int(self), int(other))
 
+	# def getDCardScore(self):
+		# rscore = 0
+		# player = self.state.players[self.pnum]
+		# player_graph = self.state.player_graph(self.pnum)
+		# min_dest_number_of_trains = 0
+
+		# for destination in player.hand_destination_cards:
+			# try:
+				# if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+					# #print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
+					# rscore = rscore + destination.points
+				# else:
+					# #print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+					# min_dest_number_of_trains = min_dest_number_of_trains + destination.points
+					# rscore = rscore - destination.points
+			# except:
+				# #print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+				# rscore = rscore - destination.points
+
+		# if player.number_of_trains < min_dest_number_of_trains:
+			# rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
+
+		# return rscore
 	def getDCardScore(self):
 		rscore = 0
 		player = self.state.players[self.pnum]
@@ -57,22 +81,70 @@ class AStarMove:
 
 		for destination in player.hand_destination_cards:
 			try:
-				if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
-					#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
-					rscore = rscore + destination.points
-				else:
-					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-					min_dest_number_of_trains = min_dest_number_of_trains + destination.points
-					rscore = rscore - destination.points
+				if destination.type != '':
+					coutrynodes = ['FRANCE1', 'FRANCE2', 'FRANCE3', 'FRANCE4', 'ITALIA1', 'ITALIA2', 'ITALIA3', 'ITALIA4', 'ITALIA5', 'OSTERREICH1', 'OSTERREICH2','OSTERREICH3', 'DEUTSCHLAND1', 'DEUTSCHLAND2', 'DEUTSCHLAND3', 'DEUTSCHLAND4', 'DEUTSCHLAND5']
+					pnodes = player_graph.nodes()
+					available_nodes = {'FRANCE': [], 'ITALIA': [], 'OSTERREICH': [], 'DEUTSCHLAND': []}
+					for node in coutrynodes:
+						if node in pnodes:
+							if 'FRANCE' in node:
+								available_nodes['FRANCE'].append(node)
+							if 'ITALIA' in node:
+								available_nodes['ITALIA'].append(node)
+							if 'DEUTSCHLAND' in node:
+								available_nodes['DEUTSCHLAND'].append(node)
+							if 'OSTERREICH' in node:
+								available_nodes['OSTERREICH'].append(node)
+
+					max_points = 0
+					if destination.type == 'city':
+						for key in available_nodes:
+							for country in available_nodes[key]:
+								if nx.has_path(player_graph, destination.destinations[0], country):
+									total = destination.points[destination.destinations[1].index(key)]
+									if total > max_points:
+										max_points = total
+									break
+							if max_points == max(destination.points):
+								break
+					elif destination.type == 'country':
+						for start in available_nodes[destination.destinations[0]]:
+							for key in available_nodes:
+								if key == destination.destinations[0]:
+									break
+
+								for country in available_nodes[key]:
+									if nx.has_path(player_graph, start, country):
+										total = destination.points[destination.destinations[1].index(key)]
+										if total > max_points:
+											max_points = total
+										break
+								if max_points == max(destination.points):
+									break
+
+					if max_points > 0:
+						rscore = rscore + max_points
+					else:
+						min_dest_number_of_trains = min_dest_number_of_trains + min(destination.points)
+						rscore = rscore - min(destination.points)
 			except:
-				#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-				rscore = rscore - destination.points
+
+				try:
+					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+						#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
+						rscore = rscore + destination.points
+					else:
+						#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+						min_dest_number_of_trains = min_dest_number_of_trains + destination.points
+						rscore = rscore - destination.points
+				except:
+					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
+					rscore = rscore - destination.points
 
 		if player.number_of_trains < min_dest_number_of_trains:
 			rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
 
 		return rscore
-
 
 	def weightPath(self):
 		incomplete_dest = []
