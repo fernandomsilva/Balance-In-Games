@@ -121,7 +121,7 @@ def point_table():
 	#	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21}
 
 	#return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15}
-	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21}
+	return {1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21, 9:27}
 
 def comparePlayerKey(p1):
 	return p1.points
@@ -268,10 +268,10 @@ class Board:
 	#city1 and city2 => string of the two cities that make up the route
 	#color => the color of the route
 	#number_of_players => the number of players in the current game
-	def get_free_connection(self, city1, city2, color, number_of_players=2, switzerland=False):
+	def get_free_connection(self, city1, city2, color, number_of_players=2, special_variant=False):
 		connections = self.get_connection(city1, city2)
 		locked = False
-		if number_of_players < 4 or (number_of_players == 3 and switzerland):
+		if number_of_players < 4 or (number_of_players == 3 and special_variant):
 			for c in connections:
 				if connections[c]['owner'] != -1:
 					locked = True
@@ -315,7 +315,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False]):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -333,6 +333,7 @@ class Game:
 		self.globetrotter_variant = variants[5]
 		self.europe_variant = variants[6]
 		self.switzerland_variant = variants[7]
+		self.nordic_countries_variant = variants[8]
 
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
@@ -348,7 +349,7 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant])
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
@@ -497,7 +498,7 @@ class Game:
 	#returns False if the player doesn't have the cards needed
 	#returns the list of cards he needs to use to claim the route
 	#if the player doesn't have enough of the color, it will try to complete the requirements with wild cards
-	def checkPlayerHandRequirements(self, player_index, number_of_cards, color, ferries):
+	def checkPlayerHandRequirements(self, player_index, number_of_cards, color, ferries, special_nordic_route=False):
 		if sum([x for x in self.players[player_index].hand.itervalues() if isinstance(x, int)]) < number_of_cards:
 			return False
 
@@ -508,15 +509,20 @@ class Game:
 
 		if color in card_count:
 			total = total + card_count[color]
-		if not self.switzerland_variant:
+		if not self.switzerland_variant and not self.nordic_countries_variant:
 			if color != 'wild' and 'wild' in card_count:
 				total = total + card_count['wild']
 			if color not in card_count and color != 'wild':
 				color = 'wild'
+	
+		if special_nordic_route:
+			total_cards_left = sum([x for x in self.players[player_index].hand.itervalues() if isinstance(x, int)])
+			total_cards_left = total_cards_left - total
+			total = total + (total_cards_left/4)
 
 		if ferries > 0 and card_count['wild'] < ferries:
 			return False
-		if total < number_of_cards:
+		if total < number_of_cards - ferries:
 			return False
 
 		cards_to_use = []
@@ -532,9 +538,33 @@ class Game:
 					cards_to_use.append(color)
 
 		if len(cards_to_use) < number_of_cards:
-			x = number_of_cards - len(cards_to_use)
-			for i in range(0, x):
-				cards_to_use.append('wild')
+			if special_nordic_route:
+				number_of_cards = number_of_cards - len(cards_to_use)
+				number_of_cards = 4 * number_of_cards			
+				length_of_original_color = len(cards_to_use)
+				
+				if card_count['wild'] > 0:
+					x = number_of_cards if number_of_cards >= card_count['wild'] else card_count['wild']
+					for i in range(0, x):
+						cards_to_use.append('wild')
+
+				while (len(cards_to_use) - length_of_original_color) < number_of_cards:
+					temp_dictionary = {}
+					for key in card_count:
+						if isinstance(card_count[key], int):
+							if key not in cards_to_use and card_count[key] > 0:
+								temp_dictionary[key] = card_count[key]
+
+					next_color = min(temp_dictionary, key=temp_dictionary.get)
+					number_of_cards_left = number_of_cards - len(cards_to_use) + length_of_original_color
+					x = number_of_cards_left if card_count[next_color] >= number_of_cards_left else temp_dictionary[next_color]
+					for i in range(0, x):
+						cards_to_use.append(next_color)
+				
+			else:
+				x = number_of_cards - len(cards_to_use)
+				for i in range(0, x):
+					cards_to_use.append('wild')
 
 		return cards_to_use
 
@@ -550,22 +580,30 @@ class Game:
 	#if the route is a gray route, pass color as the color you want to use to claim that route, for example:
 	#if you want to claim a gray route with blue cards, pass 'blue' as the color
 	def claimRoute(self, city1, city2, color):
-		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
+		edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant or self.nordic_countries_variant)
 
 		if edge != None and edge['owner'] == -1:
 			route_color = edge['color'] if edge['color'] != 'GRAY' else color
-
-			if color.lower() == 'wild' and self.switzerland_variant:
+			
+			if color.lower() == 'wild' and (self.switzerland_variant or self.nordic_countries_variant):
 				return False
 
-			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color, edge['ferries'])
+			special_nordic_route = False
+				
+			if self.nordic_countries_variant:
+				cities = [city1.lower(), city2.lower()]
+				if "murmansk" in cities and "lieksa" in cities:
+					special_nordic_route = True
+			
+			cards_needed = self.checkPlayerHandRequirements(self.current_player, edge['weight'], route_color, edge['ferries'], special_nordic_route)
 
 			if cards_needed and self.players[self.current_player].number_of_trains >= edge['weight']:
 				not_enough_cards = False
 			
 				if edge['underground']:
 					extra_weight = 0
-					for i in range(0, 2):
+					y = 2 if sum(self.train_deck.deck.itervalues()) >= 2 else sum(self.train_deck.deck.itervalues())
+					for i in range(0, y):
 						card = self.draw_card(self.train_deck)
 						if card.lower() == route_color.lower() or card.lower() == "wild":
 							extra_weight = extra_weight + 1
@@ -645,7 +683,7 @@ class Game:
 	def drawTrainCard(self, card):
 		if sum(self.train_deck.deck.itervalues()) == 0:
 			self.train_deck.reshuffle()
-		if (not self.switzerland_variant) and card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
+		if (not self.switzerland_variant) and (not self.nordic_countries_variant) and card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
 			self.players[self.current_player].hand['wild'] += 1
 			self.train_cards_face_up['wild'] -= 1
 			self.addFaceUpTrainCard()
@@ -887,7 +925,7 @@ class Game:
 		elif self.players[player_index].drawing_train_cards == True and sum(self.train_deck.deck.itervalues()) > 0:
 			pmoves.append(Move('drawTrainCard', 'top'))
 			for card in set(self.train_cards_face_up):
-				if self.switzerland_variant and self.train_cards_face_up[card] > 0:
+				if (self.switzerland_variant or self.nordic_countries_variant) and self.train_cards_face_up[card] > 0:
 					pmoves.append(Move('drawTrainCard', card))
 				else:
 					if card != 'wild' and self.train_cards_face_up[card] > 0:
@@ -903,11 +941,17 @@ class Game:
 				if (city1, city2) not in visited:
 					visited.append((city1, city2))
 
+					special_nordic_route = False				
+					if self.nordic_countries_variant:
+						cities = [city1.lower(), city2.lower()]
+						if "murmansk" in cities and "lieksa" in cities:
+							special_nordic_route = True
+	
 					for color in colors:
-						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
+						edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant or self.nordic_countries_variant)
 
 						if edge != None:
-							if self.checkPlayerHandRequirements(player_index, edge['weight'], color, edge['ferries']) != False:
+							if self.checkPlayerHandRequirements(player_index, edge['weight'], color, edge['ferries'], special_nordic_route) != False:
 								if self.players[player_index].number_of_trains >= edge['weight']:
 									pmoves.append(Move('claimRoute', [city1, city2, color]))
 								#pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
@@ -978,7 +1022,7 @@ class Game:
 				visited.append((city1, city2))
 
 				for color in colors:
-					edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant)
+					edge = self.board.get_free_connection(city1, city2, color, self.number_of_players, self.switzerland_variant or self.nordic_countries_variant)
 
 					if edge != None:
 						unclaimed.add((city1, city2))

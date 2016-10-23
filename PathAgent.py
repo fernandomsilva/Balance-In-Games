@@ -194,17 +194,39 @@ class PathAgent:
 		#print game.board.get_free_connection(paths_to_take[0][0], paths_to_take[0][1], 'PINK')
 		#print game.board.get_free_connection(paths_to_take[0][0], paths_to_take[0][1], 'WHITE')
 		
-	def destinations_not_complete(self, destination_cards, graph):
+	def destinations_not_complete(self, destination_cards, graph, switzerland=False):
 		result = []
+		
+		country_reference = {"FRANCE": ['FRANCE1', 'FRANCE2', 'FRANCE3', 'FRANCE4'], "ITALIA": ['ITALIA1', 'ITALIA2', 'ITALIA3', 'ITALIA4', 'ITALIA5'], "OSTERREICH": ['OSTERREICH1', 'OSTERREICH2','OSTERREICH3'], "DEUTSCHLAND": ['DEUTSCHLAND1', 'DEUTSCHLAND2', 'DEUTSCHLAND3', 'DEUTSCHLAND4', 'DEUTSCHLAND5']}
 
 		for card in destination_cards:
 			city1, city2 = card.destinations
 			solved = False
 			try:
-				nx.shortest_path(graph, city1, city2)
-				solved = True
+				if card.type == "city":
+					if city1 in nx.nodes():
+						for d in coutry_reference[city2]:
+							if d in nx.nodes():
+								if nx.has_path(graph, city1, d):
+									solved = True
+									break
+
+				elif card.type == "country":
+					for d1 in country_reference[city1]:
+						if d1 in nx.nodes():
+							for d2 in coutry_reference[city2]:
+								if d2 in nx.nodes():
+									if nx.has_path(graph, d1, d2):
+										solved = True
+										break
+						if solved:
+							break
 			except:
-				solved = False
+				try:
+					nx.shortest_path(graph, city1, city2)
+					solved = True
+				except:
+					solved = False
 
 			if not solved:
 				result.append({'city1': city1, 'city2': city2, 'points': card.points})
