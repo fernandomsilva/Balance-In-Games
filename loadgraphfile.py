@@ -42,7 +42,7 @@ def loadgraphfromfile(filename):
 
 	for e in G.edges():
 		for me in G[e[0]][e[1]]:
-			G[e[0]][e[1]][me]['weight'] = int(abs(num))
+			G[e[0]][e[1]][me]['weight'] = int(abs(G[e[0]][e[1]][me]['weight']))
 
 
 		#e['owner'] = -1

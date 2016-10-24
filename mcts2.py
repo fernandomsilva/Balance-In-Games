@@ -101,7 +101,7 @@ class MCTSAgent():
 			root.expand2(move)
 		start = time.time()
 
-		while time.time() - start < 100:
+		while time.time() - start < 5:
 			print time.time() - start
 			#selection
 			cNode = []

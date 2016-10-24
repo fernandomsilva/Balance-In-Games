@@ -42,7 +42,11 @@ class AStarMove:
 		self.lnum = lnum
 
 	def __int__(self):
-		return (-1) * ((self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore()) - int(float(self.lnum)/2.0))
+		if self.state.game_over == False:
+			return (-1) * ((self.state.players[self.pnum].points) + self.predictDCardScore())
+		else:	
+			return (-1) * self.state.players[self.pnum].points
+		#return (-1) * ((self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore()) - int(float(self.lnum)/2.0))
 		#return (-1) * (self.state.players[self.pnum].points + ((20 - len(self.state.players[self.pnum].hand) if len(self.state.players[self.pnum].hand) > 20 else len(self.state.players[self.pnum].hand))) + self.getDCardScore())
 		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
 		#return (self.state.players[self.pnum].points * -1) - self.state.getDCardScore(self.pnum) - self.weightPath()
@@ -50,39 +54,40 @@ class AStarMove:
 	def __cmp__(self, other):
 		return cmp(int(self), int(other))
 
-	# def getDCardScore(self):
-		# rscore = 0
-		# player = self.state.players[self.pnum]
-		# player_graph = self.state.player_graph(self.pnum)
-		# min_dest_number_of_trains = 0
+	def predictDCardScore(self):
+		player = self.state.players[self.pnum]
 
-		# for destination in player.hand_destination_cards:
-			# try:
-				# if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
-					# #print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
-					# rscore = rscore + destination.points
-				# else:
-					# #print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-					# min_dest_number_of_trains = min_dest_number_of_trains + destination.points
-					# rscore = rscore - destination.points
-			# except:
-				# #print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-				# rscore = rscore - destination.points
+		rscore, unfinished_list = self.getDCardScore()
 
-		# if player.number_of_trains < min_dest_number_of_trains:
-			# rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
-
-		# return rscore
+		dest_points = []
+		for destination in unfinished_list:
+			points = destination.points
+			if isinstance(points, int):
+				dest_points.append(points)
+			else:
+				dest_points.append(max(points))
+		
+		if sum(dest_points) < player.number_of_trains:
+			return rscore + sum(dest_points)
+		
+		dest_points.sort()
+		lost_dest = []
+		while sum(dest_points) - sum(lost_dest) > player.number_of_trains:
+			lost_dest.append(dest_points[len(lost_dest):][0])
+	
+		return rscore + sum(dest_points) - sum(lost_dest)
+	
 	def getDCardScore(self):
 		rscore = 0
 		player = self.state.players[self.pnum]
 		player_graph = self.state.player_graph(self.pnum)
 		min_dest_number_of_trains = 0
+		unfinished_list = []
 
 		for destination in player.hand_destination_cards:
 			try:
 				if destination.type != '':
-					coutrynodes = ['FRANCE1', 'FRANCE2', 'FRANCE3', 'FRANCE4', 'ITALIA1', 'ITALIA2', 'ITALIA3', 'ITALIA4', 'ITALIA5', 'OSTERREICH1', 'OSTERREICH2','OSTERREICH3', 'DEUTSCHLAND1', 'DEUTSCHLAND2', 'DEUTSCHLAND3', 'DEUTSCHLAND4', 'DEUTSCHLAND5']
+					coutrynodes = ['FRANCEA', 'FRANCEB', 'FRANCEC', 'FRANCED', 'ITALIAA', 'ITALIAB', 'ITALIAC', 'ITALIAD', 'ITALIAE', 'OSTERREICHA', 'OSTERREICHB','OSTERREICHC', 'DEUTSCHLANDA', 'DEUTSCHLANDB', 'DEUTSCHLANDC', 'DEUTSCHLANDD', 'DEUTSCHLANDE']
 					pnodes = player_graph.nodes()
 					available_nodes = {'FRANCE': [], 'ITALIA': [], 'OSTERREICH': [], 'DEUTSCHLAND': []}
 					for node in coutrynodes:
@@ -98,15 +103,16 @@ class AStarMove:
 
 					max_points = 0
 					if destination.type == 'city':
-						for key in available_nodes:
-							for country in available_nodes[key]:
-								if nx.has_path(player_graph, destination.destinations[0], country):
-									total = destination.points[destination.destinations[1].index(key)]
-									if total > max_points:
-										max_points = total
+						if destination.destinations[0] in player_graph.nodes():
+							for key in available_nodes:
+								for country in available_nodes[key]:
+									if nx.has_path(player_graph, destination.destinations[0], country):
+										total = destination.points[destination.destinations[1].index(key)]
+										if total > max_points:
+											max_points = total
+										break
+								if max_points == max(destination.points):
 									break
-							if max_points == max(destination.points):
-								break
 					elif destination.type == 'country':
 						for start in available_nodes[destination.destinations[0]]:
 							for key in available_nodes:
@@ -126,9 +132,9 @@ class AStarMove:
 						rscore = rscore + max_points
 					else:
 						min_dest_number_of_trains = min_dest_number_of_trains + min(destination.points)
-						rscore = rscore - min(destination.points)
+						#rscore = rscore - min(destination.points)
+						unfinished_list.append(destination)
 			except:
-
 				try:
 					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
 						#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
@@ -136,15 +142,18 @@ class AStarMove:
 					else:
 						#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 						min_dest_number_of_trains = min_dest_number_of_trains + destination.points
-						rscore = rscore - destination.points
+						unfinished_list.append(destination)
+						#rscore = rscore - destination.points
 				except:
+					unfinished_list.append(destination)
 					#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
-					rscore = rscore - destination.points
+					#rscore = rscore - destination.points
+					
 
-		if player.number_of_trains < min_dest_number_of_trains:
-			rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
+		#if player.number_of_trains < min_dest_number_of_trains:
+		#	rscore = rscore - 2 * (min_dest_number_of_trains - player.number_of_trains)
 
-		return rscore
+		return [rscore, unfinished_list]
 
 	def weightPath(self):
 		incomplete_dest = []
@@ -281,7 +290,7 @@ class AStarAgent:
 		count = 0
 		prioq = Queue.PriorityQueue()
 		pmoves = game.get_possible_moves(pnum)
-		max_iterations = 500
+		max_iterations = 2000
 		for move in pmoves:
 			count = count + 1
 			g = game.copy()

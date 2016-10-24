@@ -15,6 +15,9 @@ class DestinationCountryCard(DestinationCard):
 	def setType(self, ctype):
 		self.type = ctype
 
+	def __str__(self):
+		return str(self.destinations) + " " + str(self.points) + " " + self.type
+
 #class DestinationCityCountryCard(DestinationCard):
 #	def setType():
 #		self.type = 'city'

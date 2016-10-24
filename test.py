@@ -1,7 +1,4 @@
-from loaddestinationdeck import *
+from script import *
 
-d = loadcountrydestinationdeck('switzerland_city_country_destinations.txt', 'city')
-
-print d[0].destinations
-print d[0].points
-print d[0].type
+t.printScoring(0)
+t.printScoring(1)

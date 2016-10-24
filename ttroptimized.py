@@ -141,6 +141,9 @@ class DestinationCountryCard(DestinationCard):
 	def setType(self, ctype):
 		self.type = ctype
 
+	def __str__(self):
+		return str(self.destinations) + " " + str(self.points) + " " + self.type
+
 #class to encapsulate the player
 #hand => list of train cards (strings) in the player's hand
 #number_of_trains => integer of how many trains the player has left (players start with 45 trains)
@@ -315,7 +318,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False]):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False, False]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -334,6 +337,7 @@ class Game:
 		self.europe_variant = variants[6]
 		self.switzerland_variant = variants[7]
 		self.nordic_countries_variant = variants[8]
+		self.india_variant = variants[9]
 
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
@@ -349,7 +353,7 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant])
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant, self.india_variant])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
@@ -608,6 +612,9 @@ class Game:
 						if card.lower() == route_color.lower() or card.lower() == "wild":
 							extra_weight = extra_weight + 1
 						self.train_deck.discard(card)
+					
+					if sum(self.train_deck.deck.itervalues()) == 0:
+						self.train_deck.reshuffle()
 				
 					if extra_weight > 0:
 						total_player_hand = self.players[self.current_player].hand[route_color.lower()]
@@ -792,7 +799,7 @@ class Game:
 			for destination in player.hand_destination_cards:
 				try:
 					if destination.type != '':
-						coutrynodes = ['FRANCE1', 'FRANCE2', 'FRANCE3', 'FRANCE4', 'ITALIA1', 'ITALIA2', 'ITALIA3', 'ITALIA4', 'ITALIA5', 'OSTERREICH1', 'OSTERREICH2','OSTERREICH3', 'DEUTSCHLAND1', 'DEUTSCHLAND2', 'DEUTSCHLAND3', 'DEUTSCHLAND4', 'DEUTSCHLAND5']
+						coutrynodes = ['FRANCEA', 'FRANCEB', 'FRANCEC', 'FRANCED', 'ITALIAA', 'ITALIAB', 'ITALIAC', 'ITALIAD', 'ITALIAE', 'OSTERREICHA', 'OSTERREICHB','OSTERREICHC', 'DEUTSCHLANDA', 'DEUTSCHLANDB', 'DEUTSCHLANDC', 'DEUTSCHLANDD', 'DEUTSCHLANDE']
 						pnodes = player_graph.nodes()
 						available_nodes = {'FRANCE': [], 'ITALIA': [], 'OSTERREICH': [], 'DEUTSCHLAND': []}
 						for node in coutrynodes:
@@ -808,15 +815,16 @@ class Game:
 
 						max_points = 0
 						if destination.type == 'city':
-							for key in available_nodes:
-								for country in available_nodes[key]:
-									if nx.has_path(player_graph, destination.destinations[0], country):
-										total = destination.points[destination.destinations[1].index(key)]
-										if total > max_points:
-											max_points = total
+							if destination.destinations[0] in player_graph.nodes():
+								for key in available_nodes:
+									for country in available_nodes[key]:
+										if nx.has_path(player_graph, destination.destinations[0], country):
+											total = destination.points[destination.destinations[1].index(key)]
+											if total > max_points:
+												max_points = total
+											break
+									if max_points == max(destination.points):
 										break
-								if max_points == max(destination.points):
-									break
 						elif destination.type == 'country':
 							for start in available_nodes[destination.destinations[0]]:
 								for key in available_nodes:
@@ -838,14 +846,19 @@ class Game:
 						else:
 							player.points = player.points - min(destination.points)
 				except:
-#						try:
-#							for final_dest in destination.destinations[1]:
-#								if nx.has_path(player_graph, destination.destinations[0], )
 					try:
+						mandala = 0
 						if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
 							#print "Finished " + str(destination.destinations) + "!  +" + str(destination.points)
 							player.points = player.points + destination.points
 							number_of_destinations_completed += 1
+							if self.india_variant:
+								copy_graph = nx.Graph(player_graph)
+								path = nx.shortest_path(player_graph, destination.destinations[0], destination.destinations[1])
+								for i in range(0, len(path)-1):
+									copy_graph.remove_edge(path[i], path[i+1])
+								if nx.has_path(copy_graph, destination.destinations[0], destination.destinations[1]):
+									mandala += 1
 						else:
 							#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 							player.points = player.points - destination.points
@@ -853,6 +866,18 @@ class Game:
 						#print "Did not finish " + str(destination.destinations) + "!  -" + str(destination.points)
 						player.points = player.points - destination.points
 
+			#print "Player " + str(self.players.index(player)) + " M: " + str(mandala)
+			if self.india_variant and mandala > 0:
+				if mandala == 1:
+					player.points = player.points + 5
+				elif mandala == 2:
+					player.points = player.points + 10
+				elif mandala == 3:
+					player.points = player.points + 20
+				elif mandala == 4:
+					player.points = player.points + 30
+				else:
+					player.points = player.points + 40
 			if self.globetrotter_variant:
 				if number_of_destinations_completed >= max_destination_cards_completed:
 					max_destination_cards_completed = number_of_destinations_completed
@@ -976,12 +1001,52 @@ class Game:
 	
 		for destination in player.hand_destination_cards:
 			try:
-				if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
-					print str(destination.destinations) + ' was completed! +' + str(destination.points)
-				else:
-					print str(destination.destinations) + ' was not completed! -' + str(destination.points)
+				if destination.type != '':
+					coutrynodes = ['FRANCEA', 'FRANCEB', 'FRANCEC', 'FRANCED', 'ITALIAA', 'ITALIAB', 'ITALIAC', 'ITALIAD', 'ITALIAE', 'OSTERREICHA', 'OSTERREICHB','OSTERREICHC', 'DEUTSCHLANDA', 'DEUTSCHLANDB', 'DEUTSCHLANDC', 'DEUTSCHLANDD', 'DEUTSCHLANDE']
+					pnodes = player_graph.nodes()
+					available_nodes = {'FRANCE': [], 'ITALIA': [], 'OSTERREICH': [], 'DEUTSCHLAND': []}
+					for node in coutrynodes:
+						if node in pnodes:
+							if 'FRANCE' in node:
+								available_nodes['FRANCE'].append(node)
+							if 'ITALIA' in node:
+								available_nodes['ITALIA'].append(node)
+							if 'DEUTSCHLAND' in node:
+								available_nodes['DEUTSCHLAND'].append(node)
+							if 'OSTERREICH' in node:
+								available_nodes['OSTERREICH'].append(node)
+
+					scored = False
+					if destination.type == 'city':
+						if destination.destinations[0] in player_graph.nodes():
+							for key in available_nodes:
+								for country in available_nodes[key]:
+									if nx.has_path(player_graph, destination.destinations[0], country):
+										print str(destination.destinations) + ' was completed! +' + str(destination.points)
+										scored = True
+										break
+					elif destination.type == 'country':
+						for start in available_nodes[destination.destinations[0]]:
+							for key in available_nodes:
+								if key == destination.destinations[0]:
+									break
+
+								for country in available_nodes[key]:
+									if nx.has_path(player_graph, start, country):
+										print str(destination.destinations) + ' was completed! +' + str(destination.points)
+										scored = True
+										break
+
+					if not scored:
+						print str(destination.destinations) + ' was not completed! -' + str(destination.points)
 			except:
-				print str(destination.destinations) + ' was not completed! -' + str(destination.points)
+				try:
+					if nx.has_path(player_graph, destination.destinations[0], destination.destinations[1]):
+						print str(destination.destinations) + ' was completed! +' + str(destination.points)
+					else:
+						print str(destination.destinations) + ' was not completed! -' + str(destination.points)
+				except:
+					print str(destination.destinations) + ' was not completed! -' + str(destination.points)
 
 		visited = []
 		for node1 in self.board.graph:
