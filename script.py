@@ -28,7 +28,7 @@ def run(i, mode="usa"):
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
-	gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/PvP')
+	gh = GameHandler(game_object, [MCTSAgent(), PathAgent()], 'data3/MvP')
 
 	#gh.play(i, True)
 	gh.play(i)
