@@ -55,7 +55,7 @@ class GameHandler:
 			print(move.function)
 			self.game.make_move(move.function, move.args)
 		
-		print (self.game.players_choosing_destination_cards)
+		#print (self.game.players_choosing_destination_cards)
 
 		while self.game.game_over == False:
 			print("Current Player: " + str(self.game.current_player) + ", " + str(self.game.players[self.game.current_player].number_of_trains)) + ', ' + str(self.game.players[self.game.current_player].points)

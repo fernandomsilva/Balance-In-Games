@@ -48,7 +48,7 @@ class PathAgent:
 			#	print 'NO : ' + destination['city1'] + " : " + destination['city2']
 
 			city1, city2 = destination['city1'], destination['city2']
-
+			temp = []
 			try:
 				if destination['type'] == "city":
 					if city1 in joint_graph.nodes():
@@ -86,7 +86,12 @@ class PathAgent:
 							weight = game.board.graph[temp[i]][temp[i+1]][0]['weight']
 
 						if weight < game.players[pnum].number_of_trains:
-							paths_to_take.append(((-1) * (game.point_table[weight] + 2 * destination['points']), temp[i], temp[i+1]))
+							if isinstance(destination['points'], int):
+								paths_to_take.append(((-1) * (game.point_table[weight] + 2 * destination['points']), temp[i], temp[i+1]))
+							else:
+								print destination
+								paths_to_take.append(((-1) * (game.point_table[weight] + 2 * destination['points'][destination['city2'].index(temp[i+1])]), temp[i], temp[i+1]))
+
 
 		free_connections_graph = self.free_routes_graph(game.board.graph, game.number_of_players)
 

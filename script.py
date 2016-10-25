@@ -6,6 +6,7 @@ import multiprocessing as mp
 from PathAgent import *
 from AStarSeries import *
 from mcts2 import *
+from HastyAgent import *
 
 def run(i, mode="usa"):
 	if mode == "usa":
@@ -28,7 +29,7 @@ def run(i, mode="usa"):
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
-	gh = GameHandler(game_object, [MCTSAgent(), PathAgent()], 'data3/MvP')
+	gh = GameHandler(game_object, [HastyAgent(), CopyAgent()], 'data3/MvP')
 
 	#gh.play(i, True)
 	gh.play(i)

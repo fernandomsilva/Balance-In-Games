@@ -51,6 +51,9 @@ class TreeNode:
 			#except:
 			try:
 				rmove = randomAgent.decide(g, g.current_player)
+				count = count + 1
+				if count >= 35:
+					break
 				if rmove == None:
 					return 0
 			except:
@@ -63,10 +66,16 @@ class TreeNode:
 				pmax = g.players.index(player)
 				smax = player.points
 
+		if count >= 35:
+			if pmax == pnum:
+				return 0.5
+			else:
+				return -0.5	
+
 		if pmax == pnum:
-			return 1
+			return 1.0
 		else:
-			return 0
+			return 0.0
 
 	def propagate(self, winint, max_num):
 		#print winint
