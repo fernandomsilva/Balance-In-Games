@@ -7,6 +7,7 @@ from PathAgent import *
 from AStarSeries import *
 from mcts2 import *
 from HastyAgent import *
+from HungryAgent import *
 
 def run(i, mode="usa"):
 	if mode == "usa":
@@ -29,7 +30,7 @@ def run(i, mode="usa"):
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
-	gh = GameHandler(game_object, [HastyAgent(), CopyAgent()], 'data3/MvP')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent()], 'data3/HvP')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -48,7 +49,7 @@ def run(i, mode="usa"):
 #	run(i)
 #	i = i + 1
 
-t = run(0, "nordic_countries")
+t = run(0, "usa")
 #t = run(0, "usa_megagame")
 
 #game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)

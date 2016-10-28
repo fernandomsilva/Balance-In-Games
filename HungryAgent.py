@@ -1,10 +1,12 @@
+import operator
+from ttroptimized import *
+
 class HungryAgent():
 	def __init__(self):
 		self.players_previous_points = 0
 		self.colors_needed = {}
 		self.routes_by_color = {}
 		self.current_threshold = 0
-		self.ready = False
 
 	def decide(self, game, pnum):
 		possible_moves = game.get_possible_moves(pnum)
@@ -15,12 +17,14 @@ class HungryAgent():
 		joint_graph = free_connections_graph
 		for edge in player_edges:
 			joint_graph.add_edge(edge[0], edge[1], weight=0, color='none', underground=False, ferries=0)
-		
+
 		list_of_cities = []
 		d_points = 0
 		for d in game.players[pnum].hand_destination_cards:
 			list_of_cities.extend(d.destinations)
 			d_points += d.points
+
+		#print '1'
 
 		if possible_moves[0].function == 'chooseDestinationCards':
 			best_ratio = 0
@@ -38,7 +42,10 @@ class HungryAgent():
 					min_points = points
 					min_move = m
 				destinations = list(set(destinations))
-				x = generate_game_plan(destinations, joint_graph)
+				x = self.generate_game_plan(destinations, joint_graph)
+				#if x[0] == None or x[1] == None:
+				#	fitness = 0
+				#else:
 				fitness = float((points + x[0])) / float(x[1])
 				if x[1] <= game.players[pnum].number_of_trains - 5:
 					if fitness > best_ratio:
@@ -64,6 +71,121 @@ class HungryAgent():
 
 			return best_move
 
+		#print '2'
+
+		total_current_points = 0
+		for i in range(0, len(game.players)):
+			total_current_points += game.players[i].points
+
+		if self.players_previous_points < total_current_points:
+			x = self.generate_game_plan(list_of_cities, joint_graph)
+			self.colors_needed = x[3]
+			self.routes_by_color = x[2]
+			self.players_previous_points = total_current_points
+			#print self.colors_needed
+			#print self.routes_by_color
+
+		if self.current_threshold < game.players[pnum].number_of_trains - 8:
+			for move in possible_moves:
+				if move.function == 'drawDestinationCards':
+					return move
+
+		#print '3'
+
+		routes_to_take = []
+		for move in possible_moves:
+			if move.function == 'claimRoute':
+				routes_to_take.append((move.args, move))
+				#if max_route == None or max_route:
+				#	game.board.graph[]
+
+		max_route_move = None
+		max_route_value = None
+
+		#print "ROUTES: " + str(routes_to_take)
+
+		total = 0
+		if self.routes_by_color != None:
+			total = sum(len(x) for x in self.routes_by_color.values())
+			#print 'TOTAL: ' + str(total)
+		if total <= 0 and len(routes_to_take) > 0:
+			for (args, move) in routes_to_take:
+				#print args
+				if args[0] in free_connections_graph:
+					#print args[0]
+					if args[1] in free_connections_graph[args[0]]:
+						#print args[1]
+						for key in free_connections_graph[args[0]][args[1]]:
+							edge = free_connections_graph[args[0]][args[1]][key]
+							#print edge
+							#print args[2]
+							if edge['color'] == args[2] or edge['color'] == 'GRAY':
+								if max_route_value == None or max_route_value < edge['weight']:
+									max_route_value = edge['weight']
+									max_route_move = move
+
+			#print routes_to_take
+			#print "MOVE: " + str(max_route_move)
+			return max_route_move
+
+		#print '4'
+
+		#print 'ROUTES TO TAKE: ' + str(routes_to_take)
+		if len(routes_to_take) > 0:
+			#print 'AQUI'
+			for (route, move) in routes_to_take:
+				if route[0] < route[1]:
+					temp1 = route[0]
+					temp2 = route[1]
+				else:
+					temp1 = route[1]
+					temp2 = route[0]
+
+				#print [temp1, temp2]
+				#print route[2]
+				#print "TEMP1: " + str(temp1) + " TEMP2: " + str(temp2) + " COLOR: " + route[2]
+				#print [temp1, temp2] in self.routes_by_color[route[2]]
+
+				if [temp1, temp2] in self.routes_by_color[route[2]] or [temp2, temp1] in self.routes_by_color[route[2]]:
+					return move
+
+				if [temp1, temp2] in self.routes_by_color['GRAY'] or [temp2, temp1] in self.routes_by_color['GRAY']:
+					if self.colors_needed[route[2]] <= 0:
+						return move
+
+		#print '5'
+
+		moves_by_color = {}
+		for move in possible_moves:
+			if move.function == 'drawTrainCard':
+				moves_by_color[move.args.upper()] = move
+
+		colors_available = game.train_cards_face_up.copy()
+		max_color_available = max(colors_available.iteritems(), key= operator.itemgetter(1))
+		if self.colors_needed != None:
+			most_needed_color = max(self.colors_needed.iteritems(), key= operator.itemgetter(1))[0]
+		else:
+			most_needed_color = 'NONE'
+
+		if most_needed_color in colors_available:
+			return moves_by_color[most_needed_color.upper()]
+
+
+		if self.colors_needed != None and self.colors_needed[max_color_available[0].upper()] > 0:
+			return moves_by_color[max_color_available[0].upper()]
+
+		if most_needed_color == 'GRAY' and max_color_available[1] > 1:
+			if max_color_available[0].upper() in moves_by_color:
+				return moves_by_color[max_color_available[0].upper()]
+
+		#print 'HERE'
+		#print game.players[pnum].hand
+		#print self.routes_by_color
+		#print self.colors_needed
+		#for move in possible_moves:
+		#	print move.function + "   " + str(move.args)
+		return moves_by_color['TOP']
+
 	def generate_game_plan(self, dkey_nodes, G):
 		longest_route = None
 		size_longest_route = 0
@@ -72,12 +194,18 @@ class HungryAgent():
 
 		for x in range(0, len(dkey_nodes)-1):
 			for y in range(x+1, len(dkey_nodes)):
-				temp_route_size = nx.dijkstra_path_length(G, dkey_nodes[x], dkey_nodes[y])
-				if temp_route_size > size_longest_route:
-					size_longest_route = temp_route_size
-					#longest_route = nx.dijkstra_path(G, key_nodes[x], key_nodes[y])
-					result['start'] = set([dkey_nodes[x]])
-					result['end'] = set([dkey_nodes[y]])
+				#if dkey_nodes[x] in G:
+				#	if dkey_nodes[y] in G[dkey_nodes[x]]:
+				try:
+					if nx.has_path(G, dkey_nodes[x], dkey_nodes[y]):
+						temp_route_size = nx.dijkstra_path_length(G, dkey_nodes[x], dkey_nodes[y])
+						if temp_route_size > size_longest_route:
+							size_longest_route = temp_route_size
+							#longest_route = nx.dijkstra_path(G, key_nodes[x], key_nodes[y])
+							result['start'] = set([dkey_nodes[x]])
+							result['end'] = set([dkey_nodes[y]])
+				except:
+					pass
 
 		key_nodes = list((set(dkey_nodes) - result['start']) - result['end'])
 		
@@ -94,6 +222,7 @@ class HungryAgent():
 		#if len(dkey_nodes) > 2:
 		for x in key_nodes:
 			for y in result['start']:
+				#####KEY ERROR
 				temp_route_size = nx.dijkstra_path_length(G, x, y)
 				if size_shortest_route == None or temp_route_size < size_shortest_route:
 					size_shortest_route = temp_route_size
@@ -107,6 +236,8 @@ class HungryAgent():
 					which = [x, y]
 					where = 'end'
 
+			if where == '':
+				return [None, None, None, None]
 			result[where] = result[where] | set([x])
 			temp_path = nx.dijkstra_path(G, x, which[1])
 			#routes.append(temp_path)
@@ -177,8 +308,8 @@ class HungryAgent():
 						double_opt.append(temp)
 
 				else:
+					edge = G[key][x][0]
 					if edge['weight'] > 0:
-						edge = G[key][x][0]
 						colors_needed[edge['color']] += edge['weight']
 						colors_needed['WILD'] += edge['ferries']
 						color_routes[edge['color']].append([key, x])
@@ -211,55 +342,6 @@ class HungryAgent():
 
 		return [total_points_from_routes, sum(colors_needed.itervalues()), color_routes, colors_needed]
 
-					
-	def destinations_not_complete(self, destination_cards, graph, switzerland=False):
-		result = []
-		
-		country_reference = {"FRANCE": ['FRANCEA', 'FRANCEB', 'FRANCEC', 'FRANCED'], "ITALIA": ['ITALIAA', 'ITALIAB', 'ITALIAC', 'ITALIAD', 'ITALIAE'], "OSTERREICH": ['OSTERREICHA', 'OSTERREICHB','OSTERREICHC'], "DEUTSCHLAND": ['DEUTSCHLANDA', 'DEUTSCHLANDB', 'DEUTSCHLANDC', 'DEUTSCHLANDD', 'DEUTSCHLANDE']}
-
-		for card in destination_cards:
-			city1, city2 = card.destinations
-			solved = False
-			try:
-				if card.type == "city":
-					if city1 in graph.nodes():
-						for country in city2:
-							for d in country_reference[country]:
-								if d in graph.nodes():
-									if nx.has_path(graph, city1, d):
-										solved = True
-										break
-						if solved:
-							break
-
-				elif card.type == "country":
-					for d1 in country_reference[city1]:
-						if d1 in graph.nodes():
-							for country2 in city2:
-								for d2 in country_reference[country2]:
-									if d2 in graph.nodes():
-										if nx.has_path(graph, d1, d2):
-											solved = True
-											break
-							if solved:
-								break
-					if solved:
-						break
-			except:
-				try:
-					nx.shortest_path(graph, city1, city2)
-					solved = True
-				except:
-					solved = False
-
-			if not solved:
-				try:
-					result.append({'city1': city1, 'city2': city2, 'points': card.points, 'type': card.type})
-				except:
-					result.append({'city1': city1, 'city2': city2, 'points': card.points})
-
-		return result
-
 	def free_routes_graph(self, graph, number_of_players):
 		G = nx.MultiGraph()
 
@@ -270,14 +352,14 @@ class HungryAgent():
 				if node2 not in visited_nodes:
 					locked = False
 					for edge in graph[node1][node2]:
-						if number_of_players < 4:
+						if number_of_players < 4:  #################### CHECK THIS FOR SWITZERLAND!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 							if graph[node1][node2][edge]['owner'] != -1:
 								locked = True
 
 					if not locked:
 						for edge in graph[node1][node2]:
 							if graph[node1][node2][edge]['owner'] == -1:
-								G.add_edge(node1, node2, weight=graph[node1][node2][edge]['weight'], color=graph[node1][node2][edge]['color'])
+								G.add_edge(node1, node2, weight=graph[node1][node2][edge]['weight'], color=graph[node1][node2][edge]['color'], underground=graph[node1][node2][edge]['underground'], ferries=graph[node1][node2][edge]['ferries'])
 
 			visited_nodes.append(node1)
 		

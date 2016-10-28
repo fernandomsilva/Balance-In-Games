@@ -980,9 +980,9 @@ class Game:
 								if self.players[player_index].number_of_trains >= edge['weight']:
 									pmoves.append(Move('claimRoute', [city1, city2, color]))
 								#pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
-		#	if len(self.destination_deck.deck) > 0:
-		#		pmoves.append(Move('drawDestinationCards',[]))
-		#		#pmoves.append(Move(self.move_drawDestinationCards,[]))
+			if sum(self.destination_deck.deck.itervalues()) > 0:
+				pmoves.append(Move('drawDestinationCards',[]))
+				#pmoves.append(Move(self.move_drawDestinationCards,[]))
 			if sum(self.train_deck.deck.itervalues()) > 0:
 				pmoves.append(Move('drawTrainCard', 'top'))
 				#pmoves.append(Move(self.move_drawTrainCard, 'top'))

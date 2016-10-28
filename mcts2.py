@@ -42,7 +42,7 @@ class TreeNode:
 	def rollout(self, pnum, node):
 		self.state.players_choosing_destination_cards = False
 		g = self.state.copy()
-		randomAgent = CopyAgent()#PathAgent()
+		randomAgent = RandomAgent()#PathAgent()
 		count = 0
 		while g.game_over != True:
 			#try:

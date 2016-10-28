@@ -5,6 +5,15 @@ import random
 import time
 import pickle
 
+class RandomAgent:
+	def __init__(self):
+		pass
+
+	def decide(self, game, pnum):
+		pmoves = game.get_possible_moves(pnum)
+
+		return random.choice(pmoves)
+
 class CopyAgent:
 	def __init__(self):
 		pass

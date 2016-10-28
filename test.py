@@ -2,7 +2,7 @@ from script import *
 
 record = [0, 0]
 
-for i in range(0, 100):
+for i in range(0, 1000):
 	x = run(0, "usa")
 	max_points = None
 	winning_player = None
