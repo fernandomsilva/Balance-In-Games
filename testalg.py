@@ -4,23 +4,23 @@ from loaddestinationdeck import *
 import random
 import itertools
 
-def generate_game_plan(key_nodes, G):
+def generate_game_plan(dkey_nodes, G):
 	longest_route = None
 	size_longest_route = 0
 
 	result = {'start': set(), 'end':set()}
 
-	for x in range(0, len(key_nodes)-1):
-		for y in range(x+1, len(key_nodes)):
-			temp_route_size = nx.dijkstra_path_length(G, key_nodes[x], key_nodes[y])
+	for x in range(0, len(dkey_nodes)-1):
+		for y in range(x+1, len(dkey_nodes)):
+			temp_route_size = nx.dijkstra_path_length(G, dkey_nodes[x], dkey_nodes[y])
 			if temp_route_size > size_longest_route:
 				size_longest_route = temp_route_size
 				#longest_route = nx.dijkstra_path(G, key_nodes[x], key_nodes[y])
-				result['start'] = set([key_nodes[x]])
-				result['end'] = set([key_nodes[y]])
+				result['start'] = set([dkey_nodes[x]])
+				result['end'] = set([dkey_nodes[y]])
 
-	key_nodes = list((set(key_nodes) - result['start']) - result['end'])
-
+	key_nodes = list((set(dkey_nodes) - result['start']) - result['end'])
+	
 	where = ''
 	size_shortest_route = None
 
@@ -31,81 +31,25 @@ def generate_game_plan(key_nodes, G):
 
 	total_points_from_routes = 0
 
-	if len(key_nodes) > 2:
-		for x in key_nodes:
-			for y in result['start']:
-				temp_route_size = nx.dijkstra_path_length(G, x, y)
-				if size_shortest_route == None or temp_route_size < size_shortest_route:
-					size_shortest_route = temp_route_size
-					which = [x, y]
-					where = 'start'
+	#if len(dkey_nodes) > 2:
+	for x in key_nodes:
+		for y in result['start']:
+			temp_route_size = nx.dijkstra_path_length(G, x, y)
+			if size_shortest_route == None or temp_route_size < size_shortest_route:
+				size_shortest_route = temp_route_size
+				which = [x, y]
+				where = 'start'
 
-			for y in result['end']:
-				temp_route_size = nx.dijkstra_path_length(G, x, y)
-				if size_shortest_route == None or temp_route_size < size_shortest_route:
-					size_shortest_route = temp_route_size
-					which = [x, y]
-					where = 'end'
+		for y in result['end']:
+			temp_route_size = nx.dijkstra_path_length(G, x, y)
+			if size_shortest_route == None or temp_route_size < size_shortest_route:
+				size_shortest_route = temp_route_size
+				which = [x, y]
+				where = 'end'
 
-			result[where] = result[where] | set([x])
-			temp_path = nx.dijkstra_path(G, x, which[1])
-			#routes.append(temp_path)
-
-			for i in range(0, len(temp_path)-1):
-				if temp_path[i] > temp_path[i+1]:
-					temp1 = temp_path[i+1]
-					temp2 = temp_path[i]
-				else:
-					temp1 = temp_path[i]
-					temp2 = temp_path[i+1]
-
-				if (temp1 not in routes_dict) and (temp2 not in routes_dict):
-					routes_dict[temp1] = [temp2]
-
-				elif (temp1 in routes_dict):
-					if temp2 not in routes_dict[temp1]:
-						routes_dict[temp1].append(temp2)
-				else:
-					if temp1 not in routes_dict[temp2]:
-						routes_dict[temp2].append(temp1)
-
-		lost = None
-		if len(result['start']) == 1:
-			lost = list(result['start'])[0]
-		elif len(result['end']) == 1:
-			lost = list(result['end'])[0]
-
-		if lost != None:
-			size_shortest_route = None
-
-			for x in key_nodes:
-				if x != lost:
-					temp_route_size = nx.dijkstra_path_length(G, lost, x)
-					if size_shortest_route == None or temp_route_size < size_shortest_route:
-						size_shortest_route = temp_route_size
-						which = x
-
-			temp_path = nx.dijkstra_path(G, lost, which)
-
-			for i in range(0, len(temp_path)-1):
-				if temp_path[i] > temp_path[i+1]:
-					temp1 = temp_path[i+1]
-					temp2 = temp_path[i]
-				else:
-					temp1 = temp_path[i]
-					temp2 = temp_path[i+1]
-
-				if (temp1 not in routes_dict) and (temp2 not in routes_dict):
-					routes_dict[temp1] = [temp2]
-
-				elif (temp1 in routes_dict):
-					if temp2 not in routes_dict[temp1]:
-						routes_dict[temp1].append(temp2)
-				else:
-					if temp1 not in routes_dict[temp2]:
-						routes_dict[temp2].append(temp1)
-	else:
-		temp_path = nx.dijkstra_path(G, list(result['start'])[0], list(result['end'])[0])
+		result[where] = result[where] | set([x])
+		temp_path = nx.dijkstra_path(G, x, which[1])
+		#routes.append(temp_path)
 
 		for i in range(0, len(temp_path)-1):
 			if temp_path[i] > temp_path[i+1]:
@@ -124,6 +68,91 @@ def generate_game_plan(key_nodes, G):
 			else:
 				if temp1 not in routes_dict[temp2]:
 					routes_dict[temp2].append(temp1)
+	
+	size_shortest_route = None
+	for x in result['start']:
+		for y in result['end']:
+			temp_route_size = nx.dijkstra_path_length(G, x, y)
+			if size_shortest_route == None or temp_route_size < size_shortest_route:
+				size_shortest_route = temp_route_size
+				which = [x, y]
+	
+	temp_path = nx.dijkstra_path(G, which[0], which[1])
+
+	for i in range(0, len(temp_path)-1):
+		if temp_path[i] > temp_path[i+1]:
+			temp1 = temp_path[i+1]
+			temp2 = temp_path[i]
+		else:
+			temp1 = temp_path[i]
+			temp2 = temp_path[i+1]
+
+		if (temp1 not in routes_dict) and (temp2 not in routes_dict):
+			routes_dict[temp1] = [temp2]
+
+		elif (temp1 in routes_dict):
+			if temp2 not in routes_dict[temp1]:
+				routes_dict[temp1].append(temp2)
+		else:
+			if temp1 not in routes_dict[temp2]:
+				routes_dict[temp2].append(temp1)	
+
+		# lost = None
+		# if len(result['start']) == 1:
+			# lost = list(result['start'])[0]
+		# elif len(result['end']) == 1:
+			# lost = list(result['end'])[0]
+
+		# if lost != None:
+			# size_shortest_route = None
+
+			# for x in key_nodes:
+				# if x != lost:
+					# temp_route_size = nx.dijkstra_path_length(G, lost, x)
+					# if size_shortest_route == None or temp_route_size < size_shortest_route:
+						# size_shortest_route = temp_route_size
+						# which = x
+
+			# temp_path = nx.dijkstra_path(G, lost, which)
+
+			# for i in range(0, len(temp_path)-1):
+				# if temp_path[i] > temp_path[i+1]:
+					# temp1 = temp_path[i+1]
+					# temp2 = temp_path[i]
+				# else:
+					# temp1 = temp_path[i]
+					# temp2 = temp_path[i+1]
+
+				# if (temp1 not in routes_dict) and (temp2 not in routes_dict):
+					# routes_dict[temp1] = [temp2]
+
+				# elif (temp1 in routes_dict):
+					# if temp2 not in routes_dict[temp1]:
+						# routes_dict[temp1].append(temp2)
+				# else:
+					# if temp1 not in routes_dict[temp2]:
+						# routes_dict[temp2].append(temp1)
+		#print "rrr: " + str(result)
+	# else:
+		# temp_path = nx.dijkstra_path(G, list(result['start'])[0], list(result['end'])[0])
+
+		# for i in range(0, len(temp_path)-1):
+			# if temp_path[i] > temp_path[i+1]:
+				# temp1 = temp_path[i+1]
+				# temp2 = temp_path[i]
+			# else:
+				# temp1 = temp_path[i]
+				# temp2 = temp_path[i+1]
+
+			# if (temp1 not in routes_dict) and (temp2 not in routes_dict):
+				# routes_dict[temp1] = [temp2]
+
+			# elif (temp1 in routes_dict):
+				# if temp2 not in routes_dict[temp1]:
+					# routes_dict[temp1].append(temp2)
+			# else:
+				# if temp1 not in routes_dict[temp2]:
+					# routes_dict[temp2].append(temp1)
 
 	colors_needed = {"BLUE": 0, "GREEN": 0, "RED": 0, "PINK": 0, "ORANGE": 0, "BLACK": 0, "YELLOW": 0, "WHITE": 0, "GRAY": 0, "WILD": 0}
 	color_routes = {"BLUE": [], "GREEN": [], "RED": [], "PINK": [], "ORANGE": [], "BLACK": [], "YELLOW": [], "WHITE": [], "GRAY": []}
@@ -134,17 +163,23 @@ def generate_game_plan(key_nodes, G):
 		for x in routes_dict[key]:
 			if len(G[key][x].keys()) > 1:
 				temp = []
+				owned = False
 				for y in G[key][x]:
 					edge = G[key][x][y]
+					if edge['weight'] == 0:
+						owned = True
+						break
 					temp.append((edge['color'], edge['weight'], edge['ferries'], key, x))
-				double_opt.append(temp)
+				if not owned:
+					double_opt.append(temp)
 
 			else:
-				edge = G[key][x][0]
-				colors_needed[edge['color']] += edge['weight']
-				colors_needed['WILD'] += edge['ferries']
-				color_routes[edge['color']].append([key, x])
-				total_points_from_routes += point_dict[edge['weight']]
+				if edge['weight'] > 0:
+					edge = G[key][x][0]
+					colors_needed[edge['color']] += edge['weight']
+					colors_needed['WILD'] += edge['ferries']
+					color_routes[edge['color']].append([key, x])
+					total_points_from_routes += point_dict[edge['weight']]
 
 	#print colors_needed
 
@@ -174,6 +209,7 @@ def generate_game_plan(key_nodes, G):
 			total_points_from_routes += point_dict[weight]
 
 
+	#print color_routes
 	#print total_points_from_routes
 	#print sum(colors_needed.itervalues())
 
@@ -217,11 +253,13 @@ for c in combinations:
 	destinations = list(set(destinations))
 	x = generate_game_plan(destinations, G)
 	fitness = float((points + x[0])) / float(x[1])
-	if fitness > best_ratio:
-		best_ratio = fitness
-		best_dest = temp
-		croutes = x[2]
-		cneeded = x[3]
+	print x[1]
+	if x[1] <= 40:
+		if fitness > best_ratio:
+			best_ratio = fitness
+			best_dest = temp
+			croutes = x[2]
+			cneeded = x[3]
 
 for d in best_dest:
 	print d.destinations
