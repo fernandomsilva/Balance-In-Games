@@ -21,8 +21,9 @@ class HungryAgent():
 		list_of_cities = []
 		d_points = 0
 		for d in game.players[pnum].hand_destination_cards:
-			list_of_cities.extend(d.destinations)
-			d_points += d.points
+			if d.destinations[0] in joint_graph and d.destinations[1] in joint_graph:
+				list_of_cities.extend(d.destinations)
+				d_points += d.points
 
 		#print '1'
 
@@ -46,7 +47,9 @@ class HungryAgent():
 				#if x[0] == None or x[1] == None:
 				#	fitness = 0
 				#else:
-				fitness = float((points + x[0])) / float(x[1])
+				fitness = 0
+				if x[0] != None:
+					fitness = float((points + x[0])) / float(x[1])
 				if x[1] <= game.players[pnum].number_of_trains - 5:
 					if fitness > best_ratio:
 						best_ratio = fitness
@@ -171,7 +174,7 @@ class HungryAgent():
 			return moves_by_color[most_needed_color.upper()]
 
 
-		if self.colors_needed != None and self.colors_needed[max_color_available[0].upper()] > 0:
+		if self.colors_needed != None and self.colors_needed[max_color_available[0].upper()] > 0 and max_color_available[0].upper() in moves_by_color:
 			return moves_by_color[max_color_available[0].upper()]
 
 		if most_needed_color == 'GRAY' and max_color_available[1] > 1:
@@ -223,23 +226,32 @@ class HungryAgent():
 		for x in key_nodes:
 			for y in result['start']:
 				#####KEY ERROR
-				temp_route_size = nx.dijkstra_path_length(G, x, y)
-				if size_shortest_route == None or temp_route_size < size_shortest_route:
-					size_shortest_route = temp_route_size
-					which = [x, y]
-					where = 'start'
+				try:
+					temp_route_size = nx.dijkstra_path_length(G, x, y)
+					if size_shortest_route == None or temp_route_size < size_shortest_route:
+						size_shortest_route = temp_route_size
+						which = [x, y]
+						where = 'start'
+				except:
+					pass
 
 			for y in result['end']:
-				temp_route_size = nx.dijkstra_path_length(G, x, y)
-				if size_shortest_route == None or temp_route_size < size_shortest_route:
-					size_shortest_route = temp_route_size
-					which = [x, y]
-					where = 'end'
+				try:
+					temp_route_size = nx.dijkstra_path_length(G, x, y)
+					if size_shortest_route == None or temp_route_size < size_shortest_route:
+						size_shortest_route = temp_route_size
+						which = [x, y]
+						where = 'end'
+				except:
+					pass
 
 			if where == '':
 				return [None, None, None, None]
 			result[where] = result[where] | set([x])
-			temp_path = nx.dijkstra_path(G, x, which[1])
+			try:
+				temp_path = nx.dijkstra_path(G, x, which[1])
+			except:
+				temp_path = []
 			#routes.append(temp_path)
 
 			for i in range(0, len(temp_path)-1):
@@ -263,12 +275,17 @@ class HungryAgent():
 		size_shortest_route = None
 		for x in result['start']:
 			for y in result['end']:
-				temp_route_size = nx.dijkstra_path_length(G, x, y)
-				if size_shortest_route == None or temp_route_size < size_shortest_route:
-					size_shortest_route = temp_route_size
-					which = [x, y]
-		
-		temp_path = nx.dijkstra_path(G, which[0], which[1])
+				try:
+					temp_route_size = nx.dijkstra_path_length(G, x, y)
+					if size_shortest_route == None or temp_route_size < size_shortest_route:
+						size_shortest_route = temp_route_size
+						which = [x, y]
+				except:
+					temp_route_size = 0
+		try:		
+			temp_path = nx.dijkstra_path(G, which[0], which[1])
+		except:
+			temp_path = []
 
 		for i in range(0, len(temp_path)-1):
 			if temp_path[i] > temp_path[i+1]:

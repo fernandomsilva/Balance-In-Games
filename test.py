@@ -1,9 +1,9 @@
 from script import *
 
-record = [0, 0]
+record = [0, 0, 0]
 
-for i in range(0, 1000):
-	x = run(0, "usa")
+for i in range(0, 100):
+	x = run(0, "europe", 3)
 	max_points = None
 	winning_player = None
 	for i in range(0, len(x.players)):
@@ -16,3 +16,4 @@ for i in range(0, 1000):
 print record
 #t.printScoring(0)
 #t.printScoring(1)
+#t.printScoring(2)

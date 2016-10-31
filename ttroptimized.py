@@ -669,7 +669,7 @@ class Game:
 		if sum(self.destination_deck.deck.itervalues()) == 0:
 			return False
 
-		x = self.destination_deck_draw_rules[2] if sum(self.destination_deck.deck.itervalues()) >= self.destination_deck_draw_rules[2] else sum(self.destination_deck.deck.itervalues)
+		x = self.destination_deck_draw_rules[2] if sum(self.destination_deck.deck.itervalues()) >= self.destination_deck_draw_rules[2] else sum(self.destination_deck.deck.itervalues())
 		if 'destination' not in self.players[self.current_player].hand:
 			self.players[self.current_player].hand['destination'] = []
 		for i in range(0, x):
