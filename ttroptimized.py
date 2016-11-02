@@ -879,6 +879,8 @@ class Game:
 				else:
 					player.points = player.points + 40
 			if self.globetrotter_variant:
+				if number_of_destinations_completed > max_destination_cards_completed:
+					globetrotter_player = []
 				if number_of_destinations_completed >= max_destination_cards_completed:
 					max_destination_cards_completed = number_of_destinations_completed
 					globetrotter_player.append(self.players.index(player))

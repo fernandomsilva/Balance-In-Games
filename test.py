@@ -3,7 +3,7 @@ from script import *
 record = [0, 0, 0]
 
 for i in range(0, 100):
-	x = run(0, "europe", 3)
+	x = run(0, "usa", 3)
 	max_points = None
 	winning_player = None
 	for i in range(0, len(x.players)):
