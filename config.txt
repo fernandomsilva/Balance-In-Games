@@ -1,0 +1,14 @@
+board=usa
+point_table={1:1, 2:2, 3:4, 4:7, 5:10, 6:15, 8:21, 9:27}
+destination_deck=usa
+train_deck=(12, 14)
+destination_deck_draw_size_first_turn=3
+destination_deck_size_keep_first_turn=2
+destination_deck_draw_size_mid_game=3
+destination_deck_size_keep_mid_game=1
+longest_route_variant=True
+globetrotter_variant=False
+europe_variant=False
+switzerland_variant=False
+nordic_countries_variant=False
+india_variant=False
