@@ -339,6 +339,9 @@ class Game:
 		self.nordic_countries_variant = variants[8]
 		self.india_variant = variants[9]
 
+		self.number_of_current_draws = 0
+
+		#TWEAKABLE
 		self.number_of_train_cards_first_turn = 4
 		self.number_of_face_up_train_cards = 5
 		self.limit_of_face_up_wild_cards = 2
@@ -347,6 +350,8 @@ class Game:
 		self.amount_of_points_longest_route = 10
 		self.amount_of_points_globetrotter = 15
 		self.number_of_cards_draw_per_turn = 2
+
+
 
 		#Number of trains players start the game with
 
@@ -378,6 +383,8 @@ class Game:
 		g.number_of_leftover_trains_to_end_game = self.number_of_leftover_trains_to_end_game
 		g.amount_of_points_longest_route = self.amount_of_points_longest_route
 		g.amount_of_points_globetrotter = self.amount_of_points_globetrotter
+		g.number_of_cards_draw_per_turn = self.number_of_cards_draw_per_turn
+		g.number_of_current_draws = self.number_of_current_draws
 
 		return g
 
@@ -709,42 +716,55 @@ class Game:
 	def drawTrainCard(self, card):
 		if sum(self.train_deck.deck.itervalues()) == 0:
 			self.train_deck.reshuffle()
-		if (not self.switzerland_variant) and (not self.nordic_countries_variant) and card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
+		if (not self.switzerland_variant) and (not self.nordic_countries_variant) and self.number_of_current_draws + 1 < self.number_of_cards_draw_per_turn and card == 'wild' and card in self.train_cards_face_up and self.train_cards_face_up[card] > 0 and self.players[self.current_player].drawing_train_cards == False:
 			self.players[self.current_player].hand['wild'] += 1
 			self.train_cards_face_up['wild'] -= 1
+			self.number_of_current_draws += 2
 			self.addFaceUpTrainCard()
-			self.next_players_turn()
-			
+
+			if self.number_of_current_draws == self.number_of_cards_draw_per_turn:
+				self.number_of_current_draws = 0
+				self.next_players_turn()
+
+			if self.number_of_current_draws + 1 == self.number_of_cards_draw_per_turn:
+				self.players[self.current_player].drawing_train_cards = True
+
 			return True
-		
+
 		drawn = False
 		
 		if card == 'top':
 			self.players[self.current_player].hand[self.draw_card(self.train_deck)] += 1
+			self.number_of_current_draws += 1
 			drawn = True
 			
 		elif card in self.train_cards_face_up and self.train_cards_face_up[card] > 0:
 			self.players[self.current_player].hand[card] += 1
 			self.train_cards_face_up[card] -= 1
+			self.number_of_current_draws += 1
 			self.addFaceUpTrainCard()
 			
 			drawn = True
 		
 		if drawn:
 			if card == 'top' and sum(self.train_deck.deck.itervalues()) == 0:
+				self.number_of_current_draws = 0
 				self.next_players_turn()
 				return True
 
 			elif sum(self.train_deck.deck.itervalues()) == 0 and sum(self.train_cards_face_up.itervalues()) == 0:
+				self.number_of_current_draws = 0
 				self.next_players_turn()
 				return True
 
 			if self.players[self.current_player].drawing_train_cards:
 				self.players[self.current_player].drawing_train_cards = False
+				self.number_of_current_draws = 0
 				self.next_players_turn()
 			
 			else:
-				self.players[self.current_player].drawing_train_cards = True
+				if self.number_of_current_draws + 1 == self.number_of_cards_draw_per_turn:
+					self.players[self.current_player].drawing_train_cards = True
 			
 			return True
 		
