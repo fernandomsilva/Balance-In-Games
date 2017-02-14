@@ -66,7 +66,26 @@ def run(i, mode="usa", num_of_players=2):
 #	run(i)
 #	i = i + 1
 
+#results = [0, 0, 0]
+#total_points = [0, 0, 0]
+
+#num_of_games = 100
+
+#for i in range(0,num_of_games):
 t = run(0, "usa", 3)
+	
+#	total_points[0] += t.players[0].points
+#	total_points[1] += t.players[1].points
+#	total_points[2] += t.players[2].points
+	
+#	index = [t.players[0].points, t.players[1].points, t.players[2].points]
+#	index = index.index(max(index))
+	
+#	results[index] += 1
+
+#print [x / num_of_games for x in total_points]
+#print results
+
 #t = run(0, "usa_megagame")
 
 #game_object = Game(Board(loadgraphfromfile('usa.txt')), point_table(), loaddestinationdeckfromfile('usa_destinations.txt'), make_train_deck(12, 14), [Player([], 45, 0),Player([], 45, 0),Player([], 45, 0), Player([], 45, 0), Player([], 45, 0)], 0)
