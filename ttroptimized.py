@@ -339,6 +339,17 @@ class Game:
 		self.nordic_countries_variant = variants[8]
 		self.india_variant = variants[9]
 
+		self.number_of_train_cards_first_turn = 4
+		self.number_of_face_up_train_cards = 5
+		self.limit_of_face_up_wild_cards = 2
+		self.number_of_cards_drawn_on_underground = 3
+		self.number_of_leftover_trains_to_end_game = 2
+		self.amount_of_points_longest_route = 10
+		self.amount_of_points_globetrotter = 15
+		self.number_of_cards_draw_per_turn = 2
+
+		#Number of trains players start the game with
+
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
 
@@ -360,6 +371,14 @@ class Game:
 		g.players_choosing_destination_cards = self.players_choosing_destination_cards
 		g.last_turn_player = self.last_turn_player
 		g.train_cards_face_up = self.train_cards_face_up.copy()
+	 	g.number_of_train_cards_first_turn = self.number_of_train_cards_first_turn
+		g.number_of_face_up_train_cards = self.number_of_face_up_train_cards
+		g.limit_of_face_up_wild_cards = self.limit_of_face_up_wild_cards
+		g.number_of_cards_drawn_on_underground = self.number_of_cards_drawn_on_underground
+		g.number_of_leftover_trains_to_end_game = self.number_of_leftover_trains_to_end_game
+		g.amount_of_points_longest_route = self.amount_of_points_longest_route
+		g.amount_of_points_globetrotter = self.amount_of_points_globetrotter
+
 		return g
 
 	#sets up the initial state of the players hands, face up cards and etc
@@ -378,7 +397,7 @@ class Game:
 			self.destination_deck.deck['long_routes'] = 0
 
 		for i in range (0, self.number_of_players):
-			for j in range(0, 4):
+			for j in range(0, self.number_of_train_cards_first_turn):
 				self.players[i].hand[self.draw_card(self.train_deck)] += 1
 			for j in range(0, self.destination_deck_draw_rules[0]):
 				if "destination" not in self.players[i].hand:
@@ -391,7 +410,7 @@ class Game:
 		self.who_went_first = self.current_player
 		self.players_choosing_destination_cards = True
 
-		for i in range(0, 5):
+		for i in range(0, self.number_of_face_up_train_cards):
 			self.addFaceUpTrainCard()
 
 	#draws a card from a deck
@@ -425,17 +444,17 @@ class Game:
 			else:
 				self.train_cards_face_up[card] = 1			
 
-			if sum(self.train_cards_face_up.itervalues()) == 5:
+			if sum(self.train_cards_face_up.itervalues()) == self.number_of_face_up_train_cards:
 				#card_count = collections.Counter(self.train_cards_face_up)
 				card_count = self.train_cards_face_up
 
 				if 'wild' in card_count:
-					if card_count['wild'] >= 3:
+					if card_count['wild'] >= self.limit_of_face_up_wild_cards + 1:
 						x = sum(self.train_deck.deck.itervalues()) + sum(self.train_deck.discard_pile.itervalues())
-						if x > 5:
+						if x > self.number_of_face_up_train_cards:
 							self.train_deck.discard(self.train_cards_face_up)
 							self.train_cards_face_up = emptyCardDict()
-							x = 5
+							x = self.number_of_face_up_train_cards
 							for i in range(0, x):
 								try:
 									self.addFaceUpTrainCard()
@@ -606,7 +625,7 @@ class Game:
 			
 				if edge['underground']:
 					extra_weight = 0
-					y = 2 if sum(self.train_deck.deck.itervalues()) >= 2 else sum(self.train_deck.deck.itervalues())
+					y = self.number_of_cards_drawn_on_underground if (sum(self.train_deck.deck.itervalues()) + sum(self.train_deck.discard.itervalues()))  >= self.number_of_cards_drawn_on_underground else (sum(self.train_deck.deck.itervalues()) +  sum(self.train_deck.discard.itervalues()))
 					for i in range(0, y):
 						card = self.draw_card(self.train_deck)
 						if card.lower() == route_color.lower() or card.lower() == "wild":
@@ -650,7 +669,7 @@ class Game:
 			else:
 				return False
 
-			if self.players[self.current_player].number_of_trains <= 2:
+			if self.players[self.current_player].number_of_trains <= self.number_of_leftover_trains_to_end_game:
 				self.last_turn_player = self.current_player
 
 			self.next_players_turn()
@@ -740,7 +759,7 @@ class Game:
 		last_turn = False
 		if self.current_player == self.last_turn_player:
 			last_turn = True
-		if not self.players[self.current_player].choosing_destination_cards or (self.players[self.current_player].choosing_destination_cards) and move == 'chooseDestinationCards':
+		if not self.players[self.current_player].choosing_destination_cards or (self.players[self.current_player].choosing_destination_cards and move == 'chooseDestinationCards'):
 
 			if move == 'chooseDestinationCards':
 				self.move_choose_destination_cards(args)
@@ -901,11 +920,11 @@ class Game:
 
 		if self.globetrotter_variant:
 			for player in globetrotter_player:
-				self.players[player].points = self.players[player].points + 15
+				self.players[player].points = self.players[player].points + self.amount_of_points_globetrotter
 
 		if self.longest_route_variant:
 			for player in longest_route_player:
-				self.players[player].points = self.players[player].points + 10
+				self.players[player].points = self.players[player].points + self.amount_of_points_longest_route
 
 	def returnCurrentPoints(self, player):
 		player_graph = self.player_graph(self.players.index(player))

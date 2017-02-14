@@ -12,3 +12,4 @@ europe_variant=False
 switzerland_variant=False
 nordic_countries_variant=False
 india_variant=False
+number_of_train_cards_first_turn=4
