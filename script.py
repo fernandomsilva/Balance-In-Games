@@ -51,7 +51,7 @@ def run(i, mode="usa", num_of_players=2):
 
 	#gh.play(i, True)
 	gh.play(i)
-	return game_object
+	return [game_object, gh]
 
 #if __name__ == '__main__':
 #	pool = mp.Pool(20)

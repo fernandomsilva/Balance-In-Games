@@ -44,6 +44,7 @@ class GameHandler:
 		self.game = game
 		self.agents = agents
 		self.filename = filename
+		self.turn_count = 0
 
 	def play(self, runnum, save=False):
 		movelog = []
@@ -71,6 +72,7 @@ class GameHandler:
 			print(move.function)
 			#print self.game.players[self.game.current_player].hand
 			self.game.make_move(move.function, move.args)
+			self.turn_count += 1
 
 		#move = self.agents[self.game.current_player].decide(self.game, self.game.current_player)
 		#self.game.make_move(move.function, move.args)
