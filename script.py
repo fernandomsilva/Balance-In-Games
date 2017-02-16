@@ -1,7 +1,7 @@
 from ttroptimized import *
 from loadgraphfile import *
 from loaddestinationdeck import *
-from Visualization import *
+#from Visualization import *
 from configLoader import *
 import multiprocessing as mp
 from PathAgent import *
@@ -24,6 +24,7 @@ def run(configFile):
 	train_deck = (12, 14)
 	if 'train_deck' in configuration:
 		train_deck = configuration['train_deck']
+	num_remove_routes = configuration['random_remove_routes']
 
 	player = []
 	if mode == "usa":
@@ -94,8 +95,30 @@ def run(configFile):
 	for j in range(0, num_of_players):
 		player.append(Player(emptyCardDict(), trainCount, 0))
 
-	game_object = Game(Board(loadgraphfromfile(mode + '.txt')), game_point_table, destinationdeckdict(loaddestinationdeckfromfile(mode + '_destinations.txt')), make_train_deck(train_deck[0], train_deck[1]), player, 0, variants)
+	game_graph = loadgraphfromfile(mode + '.txt')
+	destination_deck = loaddestinationdeckfromfile(mode + '_destinations.txt')
 
+	for j in range(0, num_remove_routes):
+		target = random.choice(game_graph.edges())
+		game_graph.remove_edge(target[0], target[1])
+		if target[1] in game_graph[target[0]]:
+			if 1 in game_graph[target[0]][target[1]]:
+				game_graph[target[0]][target[1]][0] = game_graph[target[0]][target[1]][1]
+				game_graph.remove_edge(target[0], target[1], key = 1)
+
+
+	isolated_cities = nx.isolates(game_graph)
+	game_graph.remove_nodes_from(isolated_cities)
+	remove_destination_cards = []
+
+	for destination_card in destination_deck:
+		if destination_card.destinations[0] in isolated_cities or destination_card.destinations[1] in isolated_cities:
+			remove_destination_cards.append(destination_card)
+
+	for destination_card in remove_destination_cards:
+		destination_deck.remove(destination_card)
+
+	game_object = Game(Board(game_graph), game_point_table, destinationdeckdict(destination_deck), make_train_deck(train_deck[0], train_deck[1]), player, 0, variants)
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
