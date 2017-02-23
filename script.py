@@ -9,6 +9,7 @@ from AStarSeries import *
 from mcts2 import *
 from HastyAgent import *
 from HungryAgent import *
+from MultiStrategyAgent import *
 
 #def run(i, mode="usa", num_of_players=2):
 def run(configFile):
@@ -122,7 +123,7 @@ def run(configFile):
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
-	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), HastyAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -141,25 +142,25 @@ def run(configFile):
 #	run(i)
 #	i = i + 1
 
-#results = [0, 0, 0]
-#total_points = [0, 0, 0]
+results = [0, 0, 0]
+total_points = [0, 0, 0]
 
-#num_of_games = 100
+num_of_games = 100
+#t = run("config.txt")
+for i in range(0,num_of_games):
+	t = run("config.txt")
 
-#for i in range(0,num_of_games):
-#t = run(0, "usa", 3)
-t = run("config.txt")	
-#	total_points[0] += t.players[0].points
-#	total_points[1] += t.players[1].points
-#	total_points[2] += t.players[2].points
+	total_points[0] += t[0].players[0].points
+	total_points[1] += t[0].players[1].points
+	total_points[2] += t[0].players[2].points
 	
-#	index = [t.players[0].points, t.players[1].points, t.players[2].points]
-#	index = index.index(max(index))
+	index = [t[0].players[0].points, t[0].players[1].points, t[0].players[2].points]
+	index = index.index(max(index))
 	
-#	results[index] += 1
+	results[index] += 1
 
-#print [x / num_of_games for x in total_points]
-#print results
+print [x / num_of_games for x in total_points]
+print results
 
 #t = run(0, "usa_megagame")
 

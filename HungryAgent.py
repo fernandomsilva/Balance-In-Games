@@ -165,6 +165,7 @@ class HungryAgent():
 
 		colors_available = game.train_cards_face_up.copy()
 		max_color_available = max(colors_available.iteritems(), key= operator.itemgetter(1))
+		print self.colors_needed
 		if self.colors_needed != None:
 			most_needed_color = max(self.colors_needed.iteritems(), key= operator.itemgetter(1))[0]
 		else:

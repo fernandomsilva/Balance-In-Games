@@ -18,15 +18,14 @@ class OverthinkerAgent():
 			joint_graph.add_edge(edge[0], edge[1], weight=0, color='none', underground=False, ferries=0)
 
 		if possible_moves[0].function == 'chooseDestinationCards':
+			
 
 	def calculatePoints(self, game, pnum, pgraph):
 		point_total = 0
 
 		longest_route_value = None
 		longest_route_player = []
-		max_destination_cards_completed = 0
-		
-		number_of_destinations = 0
+		number_of_destinations_completed = 0
 
 		for destination in game.players[pnum].hand_destination_cards:
 			try:
@@ -129,7 +128,7 @@ class OverthinkerAgent():
 					longest_route_value = temp
 
 		if pnum in longest_route_player:
-			point_total = point_total + 10
+			point_total = point_total + game.amount_of_points_longest_route
 
 		if game.globetrotter_variant:
 			for player in game.players:
@@ -137,15 +136,14 @@ class OverthinkerAgent():
 					if len(player.hand_destination_cards) > max_destination_cards:
 						max_destination_cards = len(player.hand_destination_cards)
 
+		if game.globetrotter_variant:
+			if number_of_destinations_completed >= max_destination_cards:
+				point_total += game.amount_of_points_globetrotter
 
-		
-		if self.globetrotter_variant:
-			for player in globetrotter_player:
-				self.players[player].points = self.players[player].points + self.amount_of_points_globetrotter
+		return point_total
 
-		if self.longest_route_variant:
-			for player in longest_route_player:
-				self.players[player].points = self.players[player].points + self.amount_of_points_longest_route
+
+
 
 
 
