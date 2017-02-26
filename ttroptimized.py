@@ -634,7 +634,7 @@ class Game:
 			
 				if edge['underground']:
 					extra_weight = 0
-					y = self.number_of_cards_drawn_on_underground if (sum(self.train_deck.deck.itervalues()) + sum(self.train_deck.discard.itervalues()))  >= self.number_of_cards_drawn_on_underground else (sum(self.train_deck.deck.itervalues()) +  sum(self.train_deck.discard.itervalues()))
+					y = self.number_of_cards_drawn_on_underground if (sum(self.train_deck.deck.itervalues()) + sum(self.train_deck.discard_pile.itervalues()))  >= self.number_of_cards_drawn_on_underground else (sum(self.train_deck.deck.itervalues()) +  sum(self.train_deck.discard_pile.itervalues()))
 					for i in range(0, y):
 						card = self.draw_card(self.train_deck)
 						if card.lower() == route_color.lower() or card.lower() == "wild":

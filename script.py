@@ -120,13 +120,13 @@ def run(configFile):
 	for destination_card in remove_destination_cards:
 		destination_deck.remove(destination_card)
 
-	game_object = Game(Board(game_graph), game_point_table, destinationdeckdict(destination_deck), make_train_deck(train_deck[0], train_deck[1]), player, 0, variants)
+	game_object = Game(Board(game_graph), game_point_table, destinationdeckdict(destination_deck, mode), make_train_deck(train_deck[0], train_deck[1]), player, 0, variants)
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
 	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
-	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
-	gh = GameHandler(game_object, [HungryAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	#gh = GameHandler(game_object, [HungryAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -148,7 +148,7 @@ def run(configFile):
 results = [0, 0, 0]
 total_points = [0, 0, 0]
 
-num_of_games = 10
+num_of_games = 100
 #t = run("config.txt")
 for i in range(0,num_of_games):
 	t = run("config.txt")

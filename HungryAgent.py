@@ -188,7 +188,10 @@ class HungryAgent():
 		#print self.colors_needed
 		#for move in possible_moves:
 		#	print move.function + "   " + str(move.args)
-		return moves_by_color['TOP']
+		if 'TOP' in moves_by_color:
+			return moves_by_color['TOP']
+		
+		return random.choice(possible_moves)
 
 	def generate_game_plan(self, dkey_nodes, G):
 		longest_route = None
