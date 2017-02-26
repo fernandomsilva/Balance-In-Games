@@ -14,5 +14,5 @@ nordic_countries_variant=False
 india_variant=False
 number_of_train_cards_first_turn=4
 run_num=5
-num_players=3
+num_players=2
 random_remove_routes=30
