@@ -10,6 +10,7 @@ from mcts2 import *
 from HastyAgent import *
 from HungryAgent import *
 from MultiStrategyAgent import *
+from OneStepThinkerAgent import *
 
 #def run(i, mode="usa", num_of_players=2):
 def run(configFile):
@@ -123,7 +124,8 @@ def run(configFile):
 	game_object.setup()
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
-	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
+	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -145,7 +147,7 @@ def run(configFile):
 results = [0, 0, 0]
 total_points = [0, 0, 0]
 
-num_of_games = 100
+num_of_games = 10
 #t = run("config.txt")
 for i in range(0,num_of_games):
 	t = run("config.txt")
