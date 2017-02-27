@@ -1,6 +1,8 @@
 from ttroptimized import *
+import operator
+import random
 
-class LongRouteJunkie:
+class LongRouteJunkieAgent:
 	def __init__(self):
 		self.current_objective_route = None
 		self.current_objective_color = None
@@ -19,9 +21,9 @@ class LongRouteJunkie:
 		draw_train_card_moves = []
 		
 		for move in possible_moves:
-			if move.function == 'drawDestinationCards':
-				move_draw_dest = move
-			elif move.function == 'claimRoute': 
+			#if move.function == 'drawDestinationCards':
+			#	move_draw_dest = move
+			if move.function == 'claimRoute': 
 				claim_route_moves.append(move)
 			elif move.function == 'drawTrainCard':
 				draw_train_card_moves.append(move)
@@ -37,9 +39,9 @@ class LongRouteJunkie:
 			self.players_previous_points = total_current_points
 
 		if self.current_objective_color != None:
-			if self.current_objective_color == 'drawDestination':
-				self.players_previous_points = -1
-				return move_draw_dest
+			#if self.current_objective_color == 'drawDestination':
+			#	self.players_previous_points = -1
+			#	return move_draw_dest
 			
 			for move in claim_route_moves:
 				#print self.current_objective_route
@@ -95,14 +97,15 @@ class LongRouteJunkie:
 			if result != False:
 				city1, city2, color = result
 		if city1 == None:
-			min_number_of_trains = min([x.number_of_trains for x in game.players])
-			if min_number_of_trains >= min_trains_threshold and sum(game.destination_deck.deck.values()) > 0:
-				#for move in possible_moves:
-				#	if move.function == 'drawDestinationCards':
-				#		return move
-				return ['drawDestination', 'drawDestination', 'drawDestination']
-			else:
-				result = self.chooseMaxRoute(game, pnum);
+			#min_number_of_trains = min([x.number_of_trains for x in game.players])
+			#if min_number_of_trains >= min_trains_threshold and sum(game.destination_deck.deck.values()) > 0:
+			#	#for move in possible_moves:
+			#	#	if move.function == 'drawDestinationCards':
+			#	#		return move
+			#	return ['drawDestination', 'drawDestination', 'drawDestination']
+			#else:
+			#	result = self.chooseMaxRoute(game, pnum);
+			result = self.chooseMaxRoute(game, pnum)
 		
 		return result			
 

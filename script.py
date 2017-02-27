@@ -11,6 +11,7 @@ from HastyAgent import *
 from HungryAgent import *
 from MultiStrategyAgent import *
 from OneStepThinkerAgent import *
+from LongRouteJunkieAgent import *
 
 #def run(i, mode="usa", num_of_players=2):
 def run(configFile):
@@ -125,8 +126,9 @@ def run(configFile):
 
 	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
 	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
-	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
 	#gh = GameHandler(game_object, [HungryAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent(), LongRouteJunkieAgent()], 'data3/HvPvHa')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -145,21 +147,28 @@ def run(configFile):
 #	run(i)
 #	i = i + 1
 
-results = [0, 0, 0]
-total_points = [0, 0, 0]
+number_of_players = 4
 
-num_of_games = 100
+results = [0 for i in range(0, number_of_players)]
+total_points = [0 for i in range(0, number_of_players)]
+
+num_of_games = 500
 #t = run("config.txt")
 for i in range(0,num_of_games):
 	t = run("config.txt")
 
-	total_points[0] += t[0].players[0].points
-	total_points[1] += t[0].players[1].points
-	if t[0].number_of_players > 2:
-		total_points[2] += t[0].players[2].points
-		index = [t[0].players[0].points, t[0].players[1].points, t[0].players[2].points]
-	else:
-		index = [t[0].players[0].points, t[0].players[1].points]
+	for j in range(0, number_of_players):
+		total_points[j] += t[0].players[j].points
+
+	index = [t[0].players[k].points for k in range(0, number_of_players)]
+
+	#total_points[0] += t[0].players[0].points
+	#total_points[1] += t[0].players[1].points
+	#if t[0].number_of_players > 2:
+	#	total_points[2] += t[0].players[2].points
+	#	index = [t[0].players[0].points, t[0].players[1].points, t[0].players[2].points]
+	#else:
+	#	index = [t[0].players[0].points, t[0].players[1].points]
 	
 	
 	index = index.index(max(index))
