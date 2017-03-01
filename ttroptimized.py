@@ -320,7 +320,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False, False]):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -344,14 +344,14 @@ class Game:
 		self.number_of_current_draws = 0
 
 		#TWEAKABLE
-		self.number_of_train_cards_first_turn = 4
-		self.number_of_face_up_train_cards = 5
-		self.limit_of_face_up_wild_cards = 2
-		self.number_of_cards_drawn_on_underground = 3
-		self.number_of_leftover_trains_to_end_game = 2
-		self.amount_of_points_longest_route = 10
-		self.amount_of_points_globetrotter = 15
-		self.number_of_cards_draw_per_turn = 2
+		self.number_of_train_cards_first_turn = variants[10] #4
+		self.number_of_face_up_train_cards = variants[11] #5
+		self.limit_of_face_up_wild_cards = variants[12] #2
+		self.number_of_cards_drawn_on_underground = variants[13] #3
+		self.number_of_leftover_trains_to_end_game = variants[14] #2
+		self.amount_of_points_longest_route = variants[15] #10
+		self.amount_of_points_globetrotter = variants[16] #15
+		self.number_of_cards_draw_per_turn = variants[17] #2
 
 
 
@@ -371,22 +371,22 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant, self.india_variant])
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant, self.india_variant,self.number_of_train_cards_first_turn,self.number_of_face_up_train_cards, self.limit_of_face_up_wild_cards, self.number_of_cards_drawn_on_underground, self.number_of_leftover_trains_to_end_game, self.amount_of_points_longest_route, self.amount_of_points_globetrotter, self.number_of_cards_draw_per_turn])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
 		g.players_choosing_destination_cards = self.players_choosing_destination_cards
 		g.last_turn_player = self.last_turn_player
 		g.train_cards_face_up = self.train_cards_face_up.copy()
-	 	g.number_of_train_cards_first_turn = self.number_of_train_cards_first_turn
-		g.number_of_face_up_train_cards = self.number_of_face_up_train_cards
-		g.limit_of_face_up_wild_cards = self.limit_of_face_up_wild_cards
-		g.number_of_cards_drawn_on_underground = self.number_of_cards_drawn_on_underground
-		g.number_of_leftover_trains_to_end_game = self.number_of_leftover_trains_to_end_game
-		g.amount_of_points_longest_route = self.amount_of_points_longest_route
-		g.amount_of_points_globetrotter = self.amount_of_points_globetrotter
-		g.number_of_cards_draw_per_turn = self.number_of_cards_draw_per_turn
-		g.number_of_current_draws = self.number_of_current_draws
+		#g.number_of_train_cards_first_turn = self.number_of_train_cards_first_turn
+		#g.number_of_face_up_train_cards = self.number_of_face_up_train_cards
+		#g.limit_of_face_up_wild_cards = self.limit_of_face_up_wild_cards
+		#g.number_of_cards_drawn_on_underground = self.number_of_cards_drawn_on_underground
+		#g.number_of_leftover_trains_to_end_game = self.number_of_leftover_trains_to_end_game
+		#g.amount_of_points_longest_route = self.amount_of_points_longest_route
+		#g.amount_of_points_globetrotter = self.amount_of_points_globetrotter
+		#g.number_of_cards_draw_per_turn = self.number_of_cards_draw_per_turn
+		#g.number_of_current_draws = self.number_of_current_draws
 
 		return g
 

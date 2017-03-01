@@ -1,4 +1,4 @@
-from ttroptimized import *
+import networkx as nx
 import operator
 import random
 

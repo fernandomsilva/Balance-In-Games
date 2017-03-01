@@ -13,6 +13,59 @@ from MultiStrategyAgent import *
 from OneStepThinkerAgent import *
 from LongRouteJunkieAgent import *
 
+def evaluate(params, number_of_players, n=100):
+	game_obj, game_handler = runGenectic(params)
+	results = [0 for i in range(0, number_of_players)]
+	num_of_games = n
+
+	hungry_agent_index = 0
+	path_agent_index = 1
+
+	for i in range(0, num_of_games):
+		t = runGenectic(params)
+
+		#for j in range(0, number_of_players):
+		#	total_points[j] += t[0].players[j].points
+
+		index = [t[0].players[k].points for k in range(0, number_of_players)]
+		
+		index = index.index(max(index))
+		
+		results[index] += 1
+
+	return results[path_agent_index] / num_of_games
+
+
+def runGenectic(params):
+	#Loads configuration settings relevant to game setup
+	num_of_players = 2
+	mode = "usa"
+	trainCount = 45 #params
+	game_point_table = point_table() #params
+	train_deck = (12, 14) #params
+
+	player = []
+	variants = [3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
+
+	for j in range(0, num_of_players):
+		player.append(Player(emptyCardDict(), trainCount, 0))
+
+	game_graph = loadgraphfromfile(mode + '.txt')
+	destination_deck = loaddestinationdeckfromfile(mode + '_destinations.txt')
+
+	game_object = Game(Board(game_graph), game_point_table, destinationdeckdict(destination_deck, mode), make_train_deck(train_deck[0], train_deck[1]), player, 0, variants)
+	game_object.setup()
+
+	#gh = GameHandler(game_object, [AStarAgent(), PathAgent()], 'data3/AvP')
+	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
+	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	#gh = GameHandler(game_object, [HungryAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent(), LongRouteJunkieAgent()], 'data3/HvPvHa')
+
+	#gh.play(i, True)
+	gh.play(i)
+	return [game_object, gh]
+
 #def run(i, mode="usa", num_of_players=2):
 def run(configFile):
 
@@ -32,7 +85,7 @@ def run(configFile):
 	player = []
 	if mode == "usa":
 		trainCount = 45
-		variants = [3, 2, 3, 1, True, False, False, False, False, False]
+		variants = [3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))
@@ -40,7 +93,7 @@ def run(configFile):
 		"""
 	if mode == "usa1910":
 		trainCount = 45
-		variants = [3, 2, 3, 1, False, True, False, False, False, False]
+		variants = [3, 2, 3, 1, False, True, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))
@@ -48,7 +101,7 @@ def run(configFile):
 		"""
 	if mode == "usa_megagame":
 		trainCount = 45
-		variants = [5, 3, 4, 1, True, True, False, False, False, False]
+		variants = [5, 3, 4, 1, True, True, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))
@@ -56,7 +109,7 @@ def run(configFile):
 		"""
 	if mode == "usa_bigcities":
 		trainCount = 45
-		variants = [4, 2, 4, 1, False, False, False, False, False, False]
+		variants = [4, 2, 4, 1, False, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))
@@ -64,7 +117,7 @@ def run(configFile):
 		"""
 	if mode == "europe":
 		trainCount = 45
-		variants = [3, 2, 3, 1, True, False, True, False, False, False]
+		variants = [3, 2, 3, 1, True, False, True, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))
@@ -72,7 +125,7 @@ def run(configFile):
 		"""
 	if mode == "switzerland":
 		trainCount = 40
-		variants = [5, 2, 3, 1, True, False, False, True, False, False]
+		variants = [5, 2, 3, 1, True, False, False, True, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 40, 0))
@@ -80,7 +133,7 @@ def run(configFile):
 		"""
 	if mode == "nordic_countries":
 		trainCount = 40
-		variants = [5, 2, 3, 1, False, True, False, False, True, False]
+		variants = [5, 2, 3, 1, False, True, False, False, True, False, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 40, 0))
@@ -88,7 +141,7 @@ def run(configFile):
 		"""
 	if mode == "india":
 		trainCount = 45
-		variants = [4, 2, 3, 1, True, False, False, False, False, True]
+		variants = [4, 2, 3, 1, True, False, False, False, False, True, 4, 5, 2, 3, 2, 10, 15, 2]
 		"""
 		for j in range(0, num_of_players):
 			player.append(Player(emptyCardDict(), 45, 0))

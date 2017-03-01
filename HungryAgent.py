@@ -1,5 +1,6 @@
 import operator
-from ttroptimized import *
+import random
+import networkx as nx
 
 class HungryAgent():
 	def __init__(self):
