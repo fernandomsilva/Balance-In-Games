@@ -39,13 +39,13 @@ def evaluate(params, number_of_players, n=100):
 def runGenectic(params):
 	#Loads configuration settings relevant to game setup
 	num_of_players = 2
-	mode = "usa"
-	trainCount = 45 #params
+	mode = "netherlands"
+	trainCount = 40 #params
 	game_point_table = point_table() #params
 	train_deck = (12, 14) #params
 
 	player = []
-	variants = [3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
+	variants = [5, 3, 4, 1, False, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]
 
 	for j in range(0, num_of_players):
 		player.append(Player(emptyCardDict(), trainCount, 0))
@@ -60,7 +60,7 @@ def runGenectic(params):
 	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), MultiStrategyAgent()], 'data3/HvPvHa')
 	#gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
 	#gh = GameHandler(game_object, [HungryAgent(), OneStepThinkerAgent()], 'data3/HvPvHa')
-	gh = GameHandler(game_object, [HungryAgent(), PathAgent(), OneStepThinkerAgent(), LongRouteJunkieAgent()], 'data3/HvPvHa')
+	gh = GameHandler(game_object, [HungryAgent(), PathAgent()], 'data3/HvPvHa')
 
 	#gh.play(i, True)
 	gh.play(i)
@@ -200,7 +200,7 @@ def run(configFile):
 #	run(i)
 #	i = i + 1
 
-number_of_players = 4
+number_of_players = 2
 
 results = [0 for i in range(0, number_of_players)]
 total_points = [0 for i in range(0, number_of_players)]
@@ -208,7 +208,7 @@ total_points = [0 for i in range(0, number_of_players)]
 num_of_games = 500
 #t = run("config.txt")
 for i in range(0,num_of_games):
-	t = run("config.txt")
+	t = runGenectic([])
 
 	for j in range(0, number_of_players):
 		total_points[j] += t[0].players[j].points
