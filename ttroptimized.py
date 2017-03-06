@@ -353,8 +353,6 @@ class Game:
 		self.amount_of_points_globetrotter = variants[16] #15
 		self.number_of_cards_draw_per_turn = variants[17] #2
 
-
-
 		#Number of trains players start the game with
 
 	def __getstate__(self): return self.__dict__
