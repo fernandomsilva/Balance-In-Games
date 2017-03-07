@@ -44,19 +44,4 @@ def loadgraphfromfile(filename):
 		for me in G[e[0]][e[1]]:
 			G[e[0]][e[1]][me]['weight'] = int(abs(G[e[0]][e[1]][me]['weight']))
 
-
-		#e['owner'] = -1
-
-	#print G.edges()
-
-	#nx.draw(G, with_labels=True)
-	#plt.show()
-
 	return G
-
-	#for node in G.nodes():
-	#	print node
-
-	#print(G.nodes())
-	#print(G.edges())
-#loadgraphfromfile('usa.txt')
