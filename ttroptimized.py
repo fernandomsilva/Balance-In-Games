@@ -320,7 +320,7 @@ class Board:
 
 ######### REMEMBER: the first move every player makes should be to choose which destination cards they want to keep (they need to keep 2 or 3 out of the 3 they get at the setup)
 class Game:
-	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2]):
+	def __init__(self, board, point_table, destination_deck, train_deck, players, current_player, variants=[3, 2, 3, 1, True, False, False, False, False, False, 4, 5, 2, 3, 2, 10, 15, 2, False]):
 		self.board = board
 		self.point_table = point_table
 		self.destination_deck = CardManager(destination_deck)
@@ -340,6 +340,7 @@ class Game:
 		self.switzerland_variant = variants[7]
 		self.nordic_countries_variant = variants[8]
 		self.india_variant = variants[9]
+		self.asia_variant = variants[18]
 
 		self.number_of_current_draws = 0
 
@@ -369,7 +370,7 @@ class Game:
 		for p in self.players:
 			copy_players.append(p.copy())
 		#g = Game(self.board.copy(), self.point_table, copy.copy(self.destination_deck), copy.copy(self.train_deck), copy_players, self.current_player)
-		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant, self.india_variant,self.number_of_train_cards_first_turn,self.number_of_face_up_train_cards, self.limit_of_face_up_wild_cards, self.number_of_cards_drawn_on_underground, self.number_of_leftover_trains_to_end_game, self.amount_of_points_longest_route, self.amount_of_points_globetrotter, self.number_of_cards_draw_per_turn])
+		g = Game(self.board.copy(), self.point_table, {}, {}, copy_players, self.current_player, self.destination_deck_draw_rules + [self.longest_route_variant, self.globetrotter_variant, self.europe_variant, self.switzerland_variant, self.nordic_countries_variant, self.india_variant,self.number_of_train_cards_first_turn,self.number_of_face_up_train_cards, self.limit_of_face_up_wild_cards, self.number_of_cards_drawn_on_underground, self.number_of_leftover_trains_to_end_game, self.amount_of_points_longest_route, self.amount_of_points_globetrotter, self.number_of_cards_draw_per_turn, self.asia_variant])
 		g.set_moves_reference()
 		g.destination_deck = self.destination_deck.copy()
 		g.train_deck = self.train_deck.copy()
@@ -671,6 +672,9 @@ class Game:
 					self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['weight']
 					edge['owner'] = self.current_player
 					self.players[self.current_player].points = self.players[self.current_player].points + self.point_table[edge['weight']]
+					if edge['mountain'] != 0:
+						self.players[self.current_player].number_of_trains = self.players[self.current_player].number_of_trains - edge['mountain']
+						self.players[self.current_player].points = self.players[self.current_player].points + (edge['mountain'] * 2)
 
 					self.players[self.current_player].graph.add_edge(city1, city2, weight=edge['weight'])
 			else:
@@ -828,6 +832,8 @@ class Game:
 		longest_route_player = []
 		max_destination_cards_completed = 0
 		globetrotter_player = []
+		asia_route_value = None
+		asia_route_player = []
 	
 		for player in self.players:
 			#print "This player has " + str(player.points) + " points from building routes"
@@ -938,6 +944,23 @@ class Game:
 
 					longest_route_value = temp
 
+			if self.asia_variant:
+				temparr = [self.findMaxNodesVistiedForNode(player_graph, v, []) for v in player_graph.nodes()]
+				aux = [len(x) for x in temparr]
+				print aux
+				temparr = aux
+				temp = 0
+				if len(temparr) > 0:
+					temp = max(temparr)
+				
+				if asia_route_value == None or temp >= asia_route_value:
+					if temp > asia_route_value:
+						asia_route_player = [self.players.index(player)]
+					else:
+						asia_route_player.append(self.players.index(player))
+
+					asia_route_value = temp
+
 		if self.globetrotter_variant:
 			for player in globetrotter_player:
 				self.players[player].points = self.players[player].points + self.amount_of_points_globetrotter
@@ -945,6 +968,10 @@ class Game:
 		if self.longest_route_variant:
 			for player in longest_route_player:
 				self.players[player].points = self.players[player].points + self.amount_of_points_longest_route
+
+		if self.asia_variant:
+			for player in asia_route_player:
+				self.players[player].points = self.players[player].points + 10
 
 	def returnCurrentPoints(self, player):
 		player_graph = self.player_graph(self.players.index(player))
@@ -971,6 +998,17 @@ class Game:
 			result.extend([(self.findMaxWeightSumForNode(G, x, list_of_visited_edges+[(x,y)]) + G[x][y]['weight']) for (x,y) in temp_edges if source == y])
 			result.extend([(self.findMaxWeightSumForNode(G, y, list_of_visited_edges+[(x,y)]) + G[y][x]['weight']) for (x,y) in temp_edges if source == x])
 			return max(result)
+
+	def findMaxNodesVistiedForNode(self, G, source, list_of_visited_edges):
+		temp_edges = [e for e in G.edges() if e not in list_of_visited_edges and source in e]
+		if len(temp_edges) == 0:
+			return set()
+		else:
+			result = []
+			result.extend([(self.findMaxNodesVistiedForNode(G, x, list_of_visited_edges+[(x,y)]).union([x, y])) for (x,y) in temp_edges if source == y])
+			result.extend([(self.findMaxNodesVistiedForNode(G, y, list_of_visited_edges+[(x,y)]).union([x, y])) for (x,y) in temp_edges if source == x])
+			l = [len(x) for x in result]
+			return result[l.index(max(l))]
 
 	def get_possible_moves(self, player_index):
 		pmoves = []
@@ -1018,7 +1056,7 @@ class Game:
 
 						if edge != None:
 							if self.checkPlayerHandRequirements(player_index, edge['weight'], color, edge['ferries'], special_nordic_route) != False:
-								if self.players[player_index].number_of_trains >= edge['weight']:
+								if self.players[player_index].number_of_trains >= edge['weight'] + edge['mountain']:
 									pmoves.append(Move('claimRoute', [city1, city2, color]))
 								#pmoves.append(Move(self.move_claimRoute, [city1, city2, color]))
 			if sum(self.destination_deck.deck.itervalues()) > 0:

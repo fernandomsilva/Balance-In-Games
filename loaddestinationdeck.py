@@ -114,11 +114,14 @@ def loadcountrydestinationdeck(filename, ctype):
 def destinationdeckdict(dest_list, board="usa"):
 	result = {}
 
-	for dest in dest_list:
-		result[dest] = 1
+	if board == "europe" or board == "asia":
+		for dest in dest_list[6:]:
+			result[dest] = 1
 	
-	if board == "europe":
 		result['long_routes'] = dest_list[:6]
+	else:
+		for dest in dest_list:
+			result[dest] = 1
 
 	return result
 

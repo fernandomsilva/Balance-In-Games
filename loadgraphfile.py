@@ -23,7 +23,10 @@ def loadgraphfromfile(filename):
 		#print line[index+2:index+2+index_space]]
 		node1 = line[:index].strip() if (line[:index].strip())[-1] != ' ' else line[:index-1].strip()
 		node2 = line[index_after_num+2+index_space:].strip() if (line[index_after_num+2+index_space:].strip())[-1] != ' ' else (line[index_after_num+2+index_space:].strip())[:-1]
-		G.add_edge(node1, node2, weight=float(num), color=color)
+		if num[0] == '+':
+			G.add_edge(node1, node2, weight=float(num[2:]), color=color, mountain=int(num[1]))
+		else:
+			G.add_edge(node1, node2, weight=float(num), color=color, mountain=int(0))
 		line = file.readline()
 
 	for e in G.edges():
