@@ -9,53 +9,42 @@ from mapCoord import *
 
 data2 = {}
 
-data2['SOFIA'] = 251
-data2['PALERMO'] = 25
-data2['MADRID'] = 82
-data2['ATHINA'] = 128
-data2['SMYRNA'] = 34
-data2['KOBENHAVN'] = 98
-data2['BERLIN'] = 1
-data2['CONSTANTINOPLE'] = 50
-data2['LONDON'] = 305
-data2['STOCKHOLM'] = 31
-data2['LISBOA'] = 496
-data2['ANGORA'] = 307
-data2['MARSEILLE'] = 51
-data2['ROSTOV'] = 265
-data2['WIEN'] = 14
-data2['EDINBURGH'] = 441
-data2['BUDAPEST'] = 6
-data2['WILNO'] = 38
-data2['BUCURESTI'] = 58
-data2['KHARKOV'] = 331
-data2['BRUXELLES'] = 198
-data2['MUNCHEN'] = 267
-data2['SARAJEVO'] = 368
-data2['ROMA'] = 34
-data2['BREST'] = 327
-data2['WARSZAWA'] = 28
-data2['ESSEN'] = 55
-data2['DANZIG'] = 47
-data2['ERZURUM'] = 344
-data2['ZAGRAB'] = 132
-data2['BRINDISI'] = 133
-data2['ZURICH'] = 161
-data2['CADIZ'] = 505
-data2['SOCHI'] = 519
-data2['BARCELONA'] = 229
-data2['PETROGRAD'] = 21
-data2['AMSTERDAM'] = 133
-data2['FRANKFURT'] = 8
-data2['MOSKVA'] = 286
-data2['PAMPLONA'] = 79
-data2['SEVASTOPOL'] = 128
-data2['RIGA'] = 332
-data2['DIEPPE'] = 168
-data2['KYIV'] = 10
-data2['VENEZIA'] = 128
-data2['SMOLENSK'] = 212
-data2['PARIS'] = 1
+data2["TORONTO"] = 7
+data2["OMAHA"] = 14
+data2["BOSTON"] = 241
+data2["PITTSBURGH"] = 0
+data2["HELENA"] = 0
+data2["LITTLE ROCK"] = 112
+data2["SAINT LOUIS"] = 22
+data2["NEW YORK"] = 35
+data2["SALT LAKE CITY"] = 9
+data2["RALEIGH"] = 52
+data2["HOUSTON"] = 36
+data2["DALLAS"] = 68
+data2["DENVER"] = 4
+data2["WINNIPEG"] = 53
+data2["EL PASO"] = 66
+data2["LAS VEGAS"] = 209
+data2["LOS ANGELES"] = 96
+data2["CHARLESTON"] = 220
+data2["ATLANTA"] = 22
+data2["SEATTLE"] = 34
+data2["SAULT ST. MARIE"] = 15
+data2["CHICAGO"] = 23
+data2["MIAMI"] = 165
+data2["SANTA FE"] = 472
+data2["WASHINGTON"] = 176
+data2["KANSAS CITY"] = 4
+data2["VANCOUVER"] = 245
+data2["CALGARY"] = 111
+data2["SAN FRANCISCO"] = 214
+data2["PORTLAND"] = 56
+data2["PHOENIX"] = 312
+data2["NASHVILLE"] = 12
+data2["DULUTH"] = 5
+data2["NEW ORLEANS"] = 76
+data2["OKLAHOMA CITY"] = 106
+data2["MONTREAL"] = 98
 
 max_val = 0
 
@@ -71,7 +60,7 @@ for key in data2:
 #print color_data
 
 #USA
-'''m = Basemap(
+m = Basemap(
 			projection='merc',
 			llcrnrlon=-130,
 			llcrnrlat=24,
@@ -80,7 +69,7 @@ for key in data2:
 			lat_ts=0,
 			resolution='i',
 			suppress_ticks=True)
-'''
+
 #India
 '''m = Basemap(
 			projection='merc',
@@ -93,6 +82,7 @@ for key in data2:
 			suppress_ticks=True)
 '''
 #Europe
+'''
 m = Basemap(
 			projection='merc',
 			llcrnrlon=-11,
@@ -102,15 +92,15 @@ m = Basemap(
 			lat_ts=0,
 			resolution='i',
 			suppress_ticks=True)
+'''
 
-
-A = loadgraphfromfile('europe.txt')
+A = loadgraphfromfile('usa.txt')
 
 for key in A.nodes():
 	if key not in data2:
 		data2[key] = 0
 
-map_coord = map_coord_europe
+map_coord = map_coord_usa
 
 pos = {}
 pos_label = {}
