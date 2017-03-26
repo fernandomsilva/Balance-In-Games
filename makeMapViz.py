@@ -60,7 +60,7 @@ for key in data2:
 #print color_data
 
 #USA
-m = Basemap(
+'''m = Basemap(
 			projection='merc',
 			llcrnrlon=-130,
 			llcrnrlat=24,
@@ -68,7 +68,7 @@ m = Basemap(
 			urcrnrlat=53,
 			lat_ts=0,
 			resolution='i',
-			suppress_ticks=True)
+			suppress_ticks=True)'''
 
 #India
 '''m = Basemap(
@@ -94,13 +94,38 @@ m = Basemap(
 			suppress_ticks=True)
 '''
 
-A = loadgraphfromfile('usa.txt')
+#Japan
+m = Basemap(
+			projection='merc',
+			llcrnrlon=126,
+			llcrnrlat=24,
+			urcrnrlon=144,
+			urcrnrlat=45,
+			lat_ts=0,
+			resolution='i',
+			suppress_ticks=True)
+
+#Brazil
+'''m = Basemap(
+			projection='merc',
+			llcrnrlon=-73,
+			llcrnrlat=-32,
+			urcrnrlon=-33,
+			urcrnrlat=4,
+			lat_ts=0,
+			resolution='i',
+			suppress_ticks=True)'''
+
+A = loadgraphfromfile('japan.txt')
 
 for key in A.nodes():
 	if key not in data2:
 		data2[key] = 0
 
-map_coord = map_coord_usa
+map_coord = map_coord_japan
+keys = map_coord.keys()
+for key in keys:
+	map_coord[key.upper()] = map_coord[key]
 
 pos = {}
 pos_label = {}
@@ -113,6 +138,7 @@ m.drawcountries()
 #m.drawstates()
 
 # nodes
+'''
 for node in A:
     G = nx.Graph()
     if node in color_data:
@@ -123,7 +149,8 @@ for node in A:
     else:
         G.add_node(node)
         nx.draw_networkx_nodes(G,pos,node_size=1000, node_color='#ff0000')
-        
+'''
+nx.draw_networkx_nodes(A,pos,node_size=1000, node_color='#ff0000')
 nx.draw_networkx_edges(A,pos,edgelist=A.edges(),width=2,edge_color='#0000ff')
 nx.draw_networkx_labels(A,pos=pos_label,font_size=20,font_family='sans-serif')
 
